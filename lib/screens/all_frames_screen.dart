@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:wedding_frames_editor/consts/assets.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
 import '../consts/app_colors.dart';
@@ -32,7 +33,7 @@ class _DetailScreenState extends State<DetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.photo, color: WeddingColors.mainColor),
+                leading: Image.asset(WeddingAssets.gallery, height: 25,width: 25,),
                 title: const Text("Choose From Gallery"),
                 onTap: () async {
                   Navigator.pop(context); // Close the bottom sheet
@@ -40,7 +41,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.camera, color: WeddingColors.mainColor),
+                leading: Image.asset(WeddingAssets.camera, height: 25,width: 25,),
                 title: const Text("Take With Camera"),
                 onTap: () async {
                   Navigator.pop(context); // Close the bottom sheet
