@@ -27,7 +27,7 @@ class _SideDrawerState extends State<SideDrawer> {
           const DrawerHeader(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/icons/drawer_image.jpg'),
+                image: AssetImage('assets/images/drawer_image.jpg'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -36,11 +36,10 @@ class _SideDrawerState extends State<SideDrawer> {
           ListTile(
             leading: Image.asset(
               WeddingAssets.download,
-              color: Colors.black,
               height: 20,
               width: 20,
             ),
-            title: const Text('My Favorites Recipes'),
+            title: const Text('Download / Saved'),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -60,7 +59,7 @@ class _SideDrawerState extends State<SideDrawer> {
           ),
           ListTile(
             leading: Image.asset(
-              "WeddingAssets.share",
+              WeddingAssets.smartPhone,
               height: 20,
               width: 20,
             ),
