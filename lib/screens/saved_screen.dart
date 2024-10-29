@@ -28,7 +28,8 @@ class _SavedScreenState extends State<SavedScreen> {
       final path = '${directory?.path}/wedding_frames';
       final dir = Directory(path);
       if (await dir.exists()) {
-        final files = dir.listSync().where((item) => item.path.endsWith(".png")).toList();
+        final files =
+            dir.listSync().where((item) => item.path.endsWith(".png")).toList();
         setState(() {
           _images = files;
         });
@@ -53,41 +54,41 @@ class _SavedScreenState extends State<SavedScreen> {
       body: _images.isEmpty
           ? const Center(child: Text("No images saved yet."))
           : Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: _images.length,
-          itemBuilder: (context, index) {
-            return InkWell(
-              onTap: () {
-                _selectedImage = _images[index];
-                _showExportDialog();
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.all(8.0),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.8,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(_images[index].path),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                itemCount: _images.length,
+                itemBuilder: (context, index) {
+                  return InkWell(
+                    onTap: () {
+                      _selectedImage = _images[index];
+                      _showExportDialog();
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.black,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_images[index].path),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-      ),
+            ),
     );
   }
 
@@ -112,21 +113,22 @@ class _SavedScreenState extends State<SavedScreen> {
               _buildDialogButton(
                 'Expand',
                 WeddingAssets.expand,
-                    () {
-                      Navigator.pop(context); // Close the dialog
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ImagePreviewScreen(image: _selectedImage),
-                        ),
-                      );
+                () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ImagePreviewScreen(image: _selectedImage),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
                 'Delete',
                 WeddingAssets.delete,
-                    () {
+                () {
                   Navigator.pop(context);
                   _deleteImage(_selectedImage);
                 },
@@ -135,7 +137,7 @@ class _SavedScreenState extends State<SavedScreen> {
               _buildDialogButton(
                 'Share With Friends',
                 WeddingAssets.share,
-                    () {
+                () {
                   Navigator.pop(context);
                   _shareImage(_selectedImage);
                 },
@@ -152,7 +154,8 @@ class _SavedScreenState extends State<SavedScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ListTile(
         shape: OutlineInputBorder(
-            borderSide: BorderSide(color: WeddingColors.mainColor, width: 2)),
+          borderSide: BorderSide(color: WeddingColors.mainColor, width: 2),
+        ),
         leading: Image.asset(icon, height: 24, width: 24),
         title: Text(text),
         onTap: onPressed,
@@ -190,9 +193,6 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 }
 
-
-
-
 class ImagePreviewScreen extends StatelessWidget {
   final FileSystemEntity image;
 
@@ -204,7 +204,10 @@ class ImagePreviewScreen extends StatelessWidget {
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: WeddingColors.mainColor,
-        title: const Text("Downloaded Image",style: TextStyle(fontSize: 18),),
+        title: const Text(
+          "Downloaded Image",
+          style: TextStyle(fontSize: 18),
+        ),
       ),
       backgroundColor: Colors.black,
       body: Center(
