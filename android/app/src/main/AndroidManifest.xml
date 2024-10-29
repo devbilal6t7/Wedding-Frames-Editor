@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <application
-        android:label="wedding_frames_editor"
+        android:label="Wedding Frames Editor"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

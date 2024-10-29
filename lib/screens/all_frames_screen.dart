@@ -19,8 +19,7 @@ class DetailScreen extends StatefulWidget {
 
 class _DetailScreenState extends State<DetailScreen> {
   void _showImagePickerOptions(BuildContext context, FrameModel frame) {
-    final parentContext = context; // Capture context from DetailScreen
-
+    final parentContext = context;
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -36,7 +35,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 leading: Image.asset(WeddingAssets.gallery, height: 25,width: 25,),
                 title: const Text("Choose From Gallery"),
                 onTap: () async {
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                   await _pickImage(parentContext, ImageSource.gallery, frame);
                 },
               ),
@@ -44,7 +43,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 leading: Image.asset(WeddingAssets.camera, height: 25,width: 25,),
                 title: const Text("Take With Camera"),
                 onTap: () async {
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                   await _pickImage(parentContext, ImageSource.camera, frame);
                 },
               ),
@@ -59,7 +58,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
 
-    // Only navigate if the file was picked and the widget is still mounted
+
     if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
       Navigator.push(
         context,
