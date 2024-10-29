@@ -5,8 +5,6 @@ import 'package:wedding_frames_editor/consts/app_colors.dart';
 import 'package:wedding_frames_editor/consts/assets.dart';
 import 'package:wedding_frames_editor/screens/side_drawer.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
-import 'package:wedding_frames_editor/models/frame_category_model.dart';
-
 import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
 import 'all_frames_screen.dart';
@@ -20,6 +18,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
+
+  Future<void> _refreshCategories() async {
+    await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,30 +47,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       drawer: const SideDrawer(),
-      body: FutureBuilder(
-        future: Provider.of<CategoryProvider>(context, listen: false).fetchCategories(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildShimmerLoading();
-          } else if (snapshot.hasError) {
-            return const Center(child: Text("Error loading categories"));
-          } else {
-            final categories = Provider.of<CategoryProvider>(context).categories;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: categories
-                    .map((category) => Column(
-                  children: [
-                    _buildCategoryCard(category.categoryName, category.categoryId),
-                    const SizedBox(height: 16),
-                  ],
-                ))
-                    .toList(),
-              ),
-            );
-          }
-        },
+      body: RefreshIndicator(
+        onRefresh: _refreshCategories,
+        color: WeddingColors.mainColor,
+        backgroundColor: Colors.white,
+        child: FutureBuilder(
+          future: Provider.of<CategoryProvider>(context, listen: false).fetchCategories(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildShimmerLoading();
+            } else if (snapshot.hasError) {
+              return const Center(child: Text("Error loading categories"));
+            } else {
+              final categories = Provider.of<CategoryProvider>(context).categories;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: categories
+                      .map((category) => Column(
+                    children: [
+                      _buildCategoryCard(category.categoryName, category.categoryId),
+                      const SizedBox(height: 16),
+                    ],
+                  ))
+                      .toList(),
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -77,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
-
         child: Column(
           children: List.generate(
             3,

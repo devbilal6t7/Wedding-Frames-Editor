@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
@@ -16,7 +17,8 @@ class EditingScreen extends StatefulWidget {
   final FrameModel frame;
   final String imagePath;
 
-  const EditingScreen({super.key, required this.frame, required this.imagePath});
+  const EditingScreen(
+      {super.key, required this.frame, required this.imagePath});
 
   @override
   State<EditingScreen> createState() => _EditingScreenState();
@@ -24,6 +26,14 @@ class EditingScreen extends StatefulWidget {
 
 class _EditingScreenState extends State<EditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
+  String? _selectedImagePath; // Holds the selected image path
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedImagePath =
+        widget.imagePath; // Initialize with the provided image path
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +68,7 @@ class _EditingScreenState extends State<EditingScreen> {
                         backgroundDecoration: const BoxDecoration(
                           color: Colors.transparent,
                         ),
-                        imageProvider: FileImage(File(widget.imagePath)),
+                        imageProvider: FileImage(File(_selectedImagePath!)),
                         minScale: PhotoViewComputedScale.contained,
                         maxScale: PhotoViewComputedScale.covered * 2,
                         basePosition: Alignment.center,
@@ -98,7 +108,7 @@ class _EditingScreenState extends State<EditingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
-            // Implement Edit Photo action
+            _pickNewImage(); // Open image picker
           }),
           _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
             // Implement Edit Frame action
@@ -127,7 +137,17 @@ class _EditingScreenState extends State<EditingScreen> {
     );
   }
 
-  // Show Export Options Dialog
+  Future<void> _pickNewImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _selectedImagePath = image.path;
+      });
+    }
+  }
+
   void _showExportDialog() {
     showDialog(
       context: context,
@@ -175,7 +195,8 @@ class _EditingScreenState extends State<EditingScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ListTile(
         shape: OutlineInputBorder(
-            borderSide: BorderSide(color: WeddingColors.mainColor, width: 2)),
+          borderSide: BorderSide(color: WeddingColors.mainColor, width: 2),
+        ),
         leading: Image.asset(icon, height: 24, width: 24),
         title: Text(text),
         onTap: onPressed,
@@ -193,17 +214,21 @@ class _EditingScreenState extends State<EditingScreen> {
             quality: 100,
             name: "wedding_frame_${DateTime.now().millisecondsSinceEpoch}",
           );
+
           if (result["isSuccess"] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Image saved to gallery')));
+              const SnackBar(content: Text('Image saved to gallery')),
+            );
+
+            final directory = await getExternalStorageDirectory();
+            final path = '${directory?.path}/wedding_frames';
+            await Directory(path).create(recursive: true);
+
+            final filePath =
+                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final file = File(filePath);
+            await file.writeAsBytes(imageData);
           }
-          final directory = await getExternalStorageDirectory();
-          final path = '${directory?.path}/wedding_frames';
-          await Directory(path).create(recursive: true);
-
-          final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
-
-
         }
       }
     } catch (e) {
