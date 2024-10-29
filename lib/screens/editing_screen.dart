@@ -197,6 +197,15 @@ class _EditingScreenState extends State<EditingScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Image saved to gallery')));
           }
+          // Get the directory for storing images
+          final directory = await getExternalStorageDirectory();
+          final path = '${directory?.path}/wedding_frames';
+          await Directory(path).create(recursive: true);
+
+          // Save the image file
+          final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+          final file = await File(filePath).writeAsBytes(imageData);
+
         }
       }
     } catch (e) {
