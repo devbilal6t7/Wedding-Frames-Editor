@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:wedding_frames_editor/consts/app_colors.dart';
@@ -8,6 +9,7 @@ import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
 import 'all_frames_screen.dart';
+import 'editing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -142,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   final frames = Provider.of<FramesProvider>(context)
                       .getFrames(categoryId);
-                  return _buildFramesRow(frames);
+                  return _buildFramesRow(frames, categoryId);
                 }
               },
             ),
@@ -202,20 +204,79 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFramesRow(List<FrameModel> frames) {
+  Widget _buildFramesRow(List<FrameModel> frames, String categoryId) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: frames.map((frame) {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: _buildFrameThumbnail(
-              frame.frameImage,
+            child: InkWell(
+              onTap: (){
+                _showImagePickerOptions(context,frame, categoryId);
+              },
+              child: _buildFrameThumbnail(
+                frame.frameImage,
+              ),
             ),
           );
         }).toList(),
       ),
     );
+  }
+  void _showImagePickerOptions(BuildContext context, FrameModel frame, String categoryId) {
+    final parentContext = context;
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Image.asset(WeddingAssets.gallery, height: 25,width: 25,),
+                title: const Text("Choose From Gallery"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickImage(parentContext, ImageSource.gallery, frame,categoryId);
+                },
+              ),
+              ListTile(
+                leading: Image.asset(WeddingAssets.camera, height: 25,width: 25,),
+                title: const Text("Take With Camera"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickImage(parentContext, ImageSource.camera, frame, categoryId);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(BuildContext context, ImageSource source, FrameModel frame,String categoryId) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+
+    if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditingScreen(
+            frame: frame,
+            imagePath: pickedFile.path,
+            categoryId: categoryId,
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildFrameThumbnail(String imageUrl) {
