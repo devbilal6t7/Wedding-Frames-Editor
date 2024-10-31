@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,12 +14,15 @@ import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class EditingScreen extends StatefulWidget {
-  final FrameModel frame;
-  final String imagePath;
+import '../providers/frames_provider.dart';
 
-  const EditingScreen(
-      {super.key, required this.frame, required this.imagePath});
+class EditingScreen extends StatefulWidget {
+   FrameModel frame;
+  final String imagePath;
+  final String categoryId;
+
+   EditingScreen(
+      {super.key, required this.frame, required this.imagePath, required this.categoryId, });
 
   @override
   State<EditingScreen> createState() => _EditingScreenState();
@@ -26,13 +30,16 @@ class EditingScreen extends StatefulWidget {
 
 class _EditingScreenState extends State<EditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
-  String? _selectedImagePath; // Holds the selected image path
+  String? _selectedImagePath;
+  late double _rotationAngle = 0.0;
+  double _startRotationAngle = 0.0;
+
 
   @override
   void initState() {
     super.initState();
     _selectedImagePath =
-        widget.imagePath; // Initialize with the provided image path
+        widget.imagePath;
   }
 
   @override
@@ -64,14 +71,31 @@ class _EditingScreenState extends State<EditingScreen> {
                       clipBehavior: Clip.hardEdge,
                       height: frameHeight,
                       width: frameWidth,
-                      child: PhotoView(
-                        backgroundDecoration: const BoxDecoration(
-                          color: Colors.transparent,
+                      child: GestureDetector(
+                        onScaleStart: (details) {
+                          _startRotationAngle = _rotationAngle;
+                        },
+                        onScaleUpdate: (details) {
+                          // Apply rotation only if it's significant
+                          if (details.rotation.abs() > 0.01) {
+                            setState(() {
+                              _rotationAngle = _startRotationAngle +
+                                  details.rotation * 0.3; // Adjust sensitivity
+                            });
+                          }
+                        },
+                        child: Transform.rotate(
+                          angle: _rotationAngle,
+                          child: PhotoView(
+                            backgroundDecoration: const BoxDecoration(
+                              color: Colors.transparent,
+                            ),
+                            imageProvider: FileImage(File(_selectedImagePath!)),
+                            minScale: PhotoViewComputedScale.contained,
+                            maxScale: PhotoViewComputedScale.covered * 2,
+                            basePosition: Alignment.center,
+                          ),
                         ),
-                        imageProvider: FileImage(File(_selectedImagePath!)),
-                        minScale: PhotoViewComputedScale.contained,
-                        maxScale: PhotoViewComputedScale.covered * 2,
-                        basePosition: Alignment.center,
                       ),
                     ),
                     IgnorePointer(
@@ -111,7 +135,7 @@ class _EditingScreenState extends State<EditingScreen> {
             _pickNewImage(); // Open image picker
           }),
           _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
-            // Implement Edit Frame action
+            _openFramesBottomSheet(widget.categoryId);
           }),
           _buildIconButton(WeddingAssets.export, 'Export', () {
             _showExportDialog();
@@ -120,6 +144,112 @@ class _EditingScreenState extends State<EditingScreen> {
       ),
     );
   }
+
+  void _openFramesBottomSheet(String categoryId) async {
+    final framesProvider = Provider.of<FramesProvider>(context, listen: false);
+
+    // Fetch frames from the server if not already loaded for the category
+    if (framesProvider.getFrames(categoryId).isEmpty) {
+      await framesProvider.fetchFrames(categoryId);
+    }
+
+    // Open the bottom sheet with frame options
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        final frames = framesProvider.getFrames(categoryId);
+
+        return Container(
+          // padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Title
+              Container(
+                clipBehavior: Clip.hardEdge,
+                height: 50,
+                width: double.infinity,
+               decoration: BoxDecoration(
+                 color: WeddingColors.mainColor,
+               ),
+                child: Center(
+                  child: Text(
+                    "All Frames",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Grid of frames
+              Expanded(
+                child: frames.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: frames.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final frame = frames[index];
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              frame.frameImage,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
 
   Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
     return Column(

@@ -17,4 +17,12 @@ class FrameModel {
       frameImage: json['frame_image'] ?? '',
     );
   }
+  FrameModel copyWith({String? frameImage}) {
+    return FrameModel(
+      frameImage: frameImage ?? this.frameImage,
+      categoryId: '',
+      wedFrameId: '',
+      // Copy other fields as needed
+    );
+  }
 }

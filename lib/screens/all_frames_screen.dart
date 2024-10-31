@@ -66,6 +66,7 @@ class _DetailScreenState extends State<DetailScreen> {
           builder: (context) => EditingScreen(
             frame: frame,
             imagePath: pickedFile.path,
+            categoryId: widget.categoryId,
           ),
         ),
       );
