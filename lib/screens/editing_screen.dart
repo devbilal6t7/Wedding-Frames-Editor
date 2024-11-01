@@ -17,11 +17,11 @@ import 'package:permission_handler/permission_handler.dart';
 import '../providers/frames_provider.dart';
 
 class EditingScreen extends StatefulWidget {
-   FrameModel frame;
+  FrameModel frame;
   final String imagePath;
   final String categoryId;
 
-   EditingScreen(
+  EditingScreen(
       {super.key, required this.frame, required this.imagePath, required this.categoryId, });
 
   @override
@@ -31,15 +31,17 @@ class EditingScreen extends StatefulWidget {
 class _EditingScreenState extends State<EditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   String? _selectedImagePath;
-  late double _rotationAngle = 0.0;
-  double _startRotationAngle = 0.0;
 
+
+  late double _rotationAngle = 0.0;
+  Offset _imageOffset = Offset.zero;
+  Offset _initialFocalPoint = Offset.zero;
+  Offset _startOffset = Offset.zero;
 
   @override
   void initState() {
     super.initState();
-    _selectedImagePath =
-        widget.imagePath;
+    _selectedImagePath = widget.imagePath;
   }
 
   @override
@@ -67,33 +69,38 @@ class _EditingScreenState extends State<EditingScreen> {
                   alignment: Alignment.center,
                   children: [
                     Container(
-                      decoration: const BoxDecoration(),
-                      clipBehavior: Clip.hardEdge,
                       height: frameHeight,
                       width: frameWidth,
+                      decoration: const BoxDecoration(),
+                      clipBehavior: Clip.hardEdge,
                       child: GestureDetector(
                         onScaleStart: (details) {
-                          _startRotationAngle = _rotationAngle;
+                          _initialFocalPoint = details.focalPoint;
+                          _startOffset = _imageOffset;
                         },
                         onScaleUpdate: (details) {
-                          // Apply rotation only if it's significant
-                          if (details.rotation.abs() > 0.01) {
-                            setState(() {
-                              _rotationAngle = _startRotationAngle +
-                                  details.rotation * 0.3; // Adjust sensitivity
-                            });
-                          }
+                          setState(() {
+                            const rotationDampingFactor = 0.01;
+                            _rotationAngle += details.rotation * rotationDampingFactor;
+
+                            final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
+                            _imageOffset = _startOffset + offsetDelta;
+                          });
                         },
-                        child: Transform.rotate(
-                          angle: _rotationAngle,
-                          child: PhotoView(
-                            backgroundDecoration: const BoxDecoration(
-                              color: Colors.transparent,
+
+                        child: Transform.translate(
+                          offset: _imageOffset,
+                          child: Transform.rotate(
+                            angle: _rotationAngle,
+                            child: PhotoView(
+                              backgroundDecoration: const BoxDecoration(
+                                color: Colors.transparent,
+                              ),
+                              imageProvider: FileImage(File(_selectedImagePath!)),
+                              minScale: PhotoViewComputedScale.contained,
+                              maxScale: PhotoViewComputedScale.covered * 2,
+                              basePosition: Alignment.center,
                             ),
-                            imageProvider: FileImage(File(_selectedImagePath!)),
-                            minScale: PhotoViewComputedScale.contained,
-                            maxScale: PhotoViewComputedScale.covered * 2,
-                            basePosition: Alignment.center,
                           ),
                         ),
                       ),
@@ -117,6 +124,8 @@ class _EditingScreenState extends State<EditingScreen> {
     );
   }
 
+
+
   Widget _buildStaticBottomSheet() {
     return Container(
       height: 80,
@@ -132,7 +141,7 @@ class _EditingScreenState extends State<EditingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
-            _pickNewImage(); // Open image picker
+            _pickNewImage();
           }),
           _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
             _openFramesBottomSheet(widget.categoryId);
@@ -147,13 +156,10 @@ class _EditingScreenState extends State<EditingScreen> {
 
   void _openFramesBottomSheet(String categoryId) async {
     final framesProvider = Provider.of<FramesProvider>(context, listen: false);
-
-    // Fetch frames from the server if not already loaded for the category
     if (framesProvider.getFrames(categoryId).isEmpty) {
       await framesProvider.fetchFrames(categoryId);
     }
 
-    // Open the bottom sheet with frame options
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -166,84 +172,80 @@ class _EditingScreenState extends State<EditingScreen> {
       builder: (BuildContext context) {
         final frames = framesProvider.getFrames(categoryId);
 
-        return Container(
-          // padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Title
-              Container(
-                clipBehavior: Clip.hardEdge,
-                height: 50,
-                width: double.infinity,
-               decoration: BoxDecoration(
-                 color: WeddingColors.mainColor,
-               ),
-                child: Center(
-                  child: Text(
-                    "All Frames",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Title
+            Container(
+              clipBehavior: Clip.hardEdge,
+              height: 50,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: WeddingColors.mainColor,
+              ),
+              child: const Center(
+                child: Text(
+                  "All Frames",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              // Grid of frames
-              Expanded(
-                child: frames.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.7,
-                  ),
-                  itemCount: frames.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final frame = frames[index];
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                spreadRadius: 2,
-                                blurRadius: 5,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              frame.frameImage,
-                              fit: BoxFit.cover,
+            Expanded(
+              child: frames.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 0.7,
+                ),
+                itemCount: frames.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final frame = frames[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
                             ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            frame.frameImage,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -299,7 +301,7 @@ class _EditingScreenState extends State<EditingScreen> {
               _buildDialogButton(
                 'Download/Save',
                 WeddingAssets.download,
-                () {
+                    () {
                   _saveImage();
                   Navigator.pop(context);
                 },
@@ -308,7 +310,7 @@ class _EditingScreenState extends State<EditingScreen> {
               _buildDialogButton(
                 'Share With Friends',
                 WeddingAssets.share,
-                () {
+                    () {
                   _shareImage();
                   Navigator.pop(context);
                 },

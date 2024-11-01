@@ -22,7 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
 
   Future<void> _refreshCategories() async {
-    await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+    await Provider.of<CategoryProvider>(context, listen: false)
+        .fetchCategories();
   }
 
   @override
@@ -54,24 +55,29 @@ class _HomeScreenState extends State<HomeScreen> {
         color: WeddingColors.mainColor,
         backgroundColor: Colors.white,
         child: FutureBuilder(
-          future: Provider.of<CategoryProvider>(context, listen: false).fetchCategories(),
+          future: Provider.of<CategoryProvider>(context, listen: false)
+              .fetchCategories(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return _buildShimmerLoading();
             } else if (snapshot.hasError) {
-              return const Center(child: Text("Error loading categories"));
+              return const Center(
+                child: Text("Check Your Internet Connection"),
+              );
             } else {
-              final categories = Provider.of<CategoryProvider>(context).categories;
+              final categories =
+                  Provider.of<CategoryProvider>(context).categories;
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: categories
                       .map((category) => Column(
-                    children: [
-                      _buildCategoryCard(category.categoryName, category.categoryId),
-                      const SizedBox(height: 16),
-                    ],
-                  ))
+                            children: [
+                              _buildCategoryCard(
+                                  category.categoryName, category.categoryId),
+                              const SizedBox(height: 16),
+                            ],
+                          ))
                       .toList(),
                 ),
               );
@@ -89,14 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: List.generate(
             3,
-                (index) => Column(
+            (index) => Column(
               children: [
                 Shimmer.fromColors(
                   baseColor: Colors.grey.shade300,
                   highlightColor: Colors.grey.shade100,
                   child: Container(
                     width: double.infinity,
-                    height: 230.0, // Set height to match _buildCategoryCard height
+                    height:
+                        230.0, // Set height to match _buildCategoryCard height
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16.0),
@@ -184,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: List.generate(
           3,
-              (index) => Padding(
+          (index) => Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Shimmer.fromColors(
               baseColor: Colors.grey.shade300,
@@ -212,8 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: InkWell(
-              onTap: (){
-                _showImagePickerOptions(context,frame, categoryId);
+              onTap: () {
+                _showImagePickerOptions(context, frame, categoryId);
               },
               child: _buildFrameThumbnail(
                 frame.frameImage,
@@ -224,7 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  void _showImagePickerOptions(BuildContext context, FrameModel frame, String categoryId) {
+
+  void _showImagePickerOptions(
+      BuildContext context, FrameModel frame, String categoryId) {
     final parentContext = context;
     showModalBottomSheet(
       context: context,
@@ -238,19 +247,29 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Image.asset(WeddingAssets.gallery, height: 25,width: 25,),
+                leading: Image.asset(
+                  WeddingAssets.gallery,
+                  height: 25,
+                  width: 25,
+                ),
                 title: const Text("Choose From Gallery"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.gallery, frame,categoryId);
+                  await _pickImage(
+                      parentContext, ImageSource.gallery, frame, categoryId);
                 },
               ),
               ListTile(
-                leading: Image.asset(WeddingAssets.camera, height: 25,width: 25,),
+                leading: Image.asset(
+                  WeddingAssets.camera,
+                  height: 25,
+                  width: 25,
+                ),
                 title: const Text("Take With Camera"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.camera, frame, categoryId);
+                  await _pickImage(
+                      parentContext, ImageSource.camera, frame, categoryId);
                 },
               ),
             ],
@@ -260,12 +279,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, ImageSource source, FrameModel frame,String categoryId) async {
+  Future<void> _pickImage(BuildContext context, ImageSource source,
+      FrameModel frame, String categoryId) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
 
-
-    if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
+    if (pickedFile != null &&
+        Navigator.of(context, rootNavigator: true).mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
