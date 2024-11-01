@@ -13,7 +13,6 @@ import 'package:path_provider/path_provider.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import '../providers/frames_provider.dart';
 
 class EditingScreen extends StatefulWidget {

@@ -9,6 +9,7 @@ import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
 import 'all_frames_screen.dart';
+import 'couple_editing_screen.dart';
 import 'editing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -282,22 +283,48 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _pickImage(BuildContext context, ImageSource source,
       FrameModel frame, String categoryId) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
 
-    if (pickedFile != null &&
-        Navigator.of(context, rootNavigator: true).mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EditingScreen(
-            frame: frame,
-            imagePath: pickedFile.path,
-            categoryId: categoryId,
+    if (categoryId == '1') {
+      // For category 1, pick two images sequentially
+      final XFile? image1 = await picker.pickImage(source: source);
+
+      if (image1 == null) return; // If the first image picking is canceled, stop here
+
+      final XFile? image2 = await picker.pickImage(source: source);
+
+      if (image2 != null && Navigator.of(context, rootNavigator: true).mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CoupleEditingScreen(
+              frame: frame,
+              imagePath1: image1.path,
+              imagePath2: image2.path,
+              categoryId: categoryId,
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } else {
+      // Default behavior: pick one image
+      final XFile? pickedFile = await picker.pickImage(source: source);
+
+      if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditingScreen(
+              frame: frame,
+              imagePath: pickedFile.path,
+              categoryId: categoryId,
+            ),
+          ),
+        );
+      }
     }
   }
+
+
 
   Widget _buildFrameThumbnail(String imageUrl) {
     return ClipRRect(
