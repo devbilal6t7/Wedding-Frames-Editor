@@ -30,7 +30,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   int _selectedImageIndex = 0;
 
-  // Rotation angles and offsets for images
+// Rotation angles and offsets for images
   late double _rotationAngle1 = 0.0;
   Offset _imageOffset1 = Offset.zero;
 
@@ -58,15 +58,18 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
+        title:
+            const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
         backgroundColor: WeddingColors.mainColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.image, color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.image,
+                color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(0),
           ),
           IconButton(
-            icon: Icon(Icons.image, color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.image,
+                color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(1),
           ),
         ],
@@ -81,7 +84,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // First half of the frame (left side for image 1)
+// First half of the frame (left side for image 1)
                     Positioned(
                       left: 0,
                       top: 0,
@@ -96,7 +99,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                         frameWidth / 2,
                       ),
                     ),
-                    // Second half of the frame (right side for image 2)
+// Second half of the frame (right side for image 2)
                     Positioned(
                       left: frameWidth / 2,
                       top: 0,
@@ -111,7 +114,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                         frameWidth / 2,
                       ),
                     ),
-                    // Overlay frame image that covers both halves
+// Overlay frame image that covers both halves
                     IgnorePointer(
                       child: Image.network(
                         widget.frame.frameImage,
@@ -130,6 +133,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       bottomSheet: _buildStaticBottomSheet(),
     );
   }
+
   Widget _buildImageWithFrame(
       String imagePath,
       double rotationAngle,
@@ -178,7 +182,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     );
   }
 
-
   Widget _buildStaticBottomSheet() {
     return Container(
       height: 80,
@@ -221,10 +224,10 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   }
 
   Future<void> _pickNewImage() async {
-    // Implementation for picking a new image
+// Implementation for picking a new image
   }
 
   void _showExportDialog() {
-    // Export dialog logic
+// Export dialog logic
   }
 }
