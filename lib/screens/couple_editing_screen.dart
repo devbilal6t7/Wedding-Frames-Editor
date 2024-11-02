@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:photo_view/photo_view.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
@@ -32,6 +30,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   int _selectedImageIndex = 0;
 
+  // Rotation angles and offsets for images
   late double _rotationAngle1 = 0.0;
   Offset _imageOffset1 = Offset.zero;
 
@@ -82,22 +81,37 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    _buildImageWithFrame(
-                      _selectedImagePath1,
-                      _rotationAngle1,
-                      _imageOffset1,
-                      0,
-                      frameHeight,
-                      frameWidth,
+                    // First half of the frame (left side for image 1)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      width: frameWidth / 2,
+                      height: frameHeight,
+                      child: _buildImageWithFrame(
+                        _selectedImagePath1,
+                        _rotationAngle1,
+                        _imageOffset1,
+                        0,
+                        frameHeight,
+                        frameWidth / 2,
+                      ),
                     ),
-                    _buildImageWithFrame(
-                      _selectedImagePath2,
-                      _rotationAngle2,
-                      _imageOffset2,
-                      1,
-                      frameHeight,
-                      frameWidth,
+                    // Second half of the frame (right side for image 2)
+                    Positioned(
+                      left: frameWidth / 2,
+                      top: 0,
+                      width: frameWidth / 2,
+                      height: frameHeight,
+                      child: _buildImageWithFrame(
+                        _selectedImagePath2,
+                        _rotationAngle2,
+                        _imageOffset2,
+                        1,
+                        frameHeight,
+                        frameWidth / 2,
+                      ),
                     ),
+                    // Overlay frame image that covers both halves
                     IgnorePointer(
                       child: Image.network(
                         widget.frame.frameImage,
@@ -116,7 +130,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       bottomSheet: _buildStaticBottomSheet(),
     );
   }
-
   Widget _buildImageWithFrame(
       String imagePath,
       double rotationAngle,
@@ -125,22 +138,23 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       double frameHeight,
       double frameWidth,
       ) {
-    return index == _selectedImageIndex
-        ? GestureDetector(
-      onScaleStart: (details) {
-        setState(() {
-          _imageOffset1 = imageOffset;
-        });
-      },
+    return GestureDetector(
       onScaleUpdate: (details) {
         setState(() {
           const dampingFactor = 0.5;
+
           if (index == 0) {
+            // Adjust the position for sliding (pan)
+            _imageOffset1 += details.focalPointDelta;
+
+            // Adjust the rotation
             _rotationAngle1 += details.rotation * dampingFactor;
-            _imageOffset1 += details.focalPoint - imageOffset;
           } else {
+            // Adjust the position for sliding (pan)
+            _imageOffset2 += details.focalPointDelta;
+
+            // Adjust the rotation
             _rotationAngle2 += details.rotation * dampingFactor;
-            _imageOffset2 += details.focalPoint - imageOffset;
           }
         });
       },
@@ -148,7 +162,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         height: frameHeight,
         width: frameWidth,
         child: Transform.translate(
-          offset: imageOffset,
+          offset: index == 0 ? _imageOffset1 : _imageOffset2,
           child: Transform.rotate(
             angle: rotationAngle,
             child: PhotoView(
@@ -161,8 +175,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
           ),
         ),
       ),
-    )
-        : Offstage();
+    );
   }
 
 
