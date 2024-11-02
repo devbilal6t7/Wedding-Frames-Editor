@@ -1,19 +1,11 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
-import '../providers/frames_provider.dart';
 import '../models/frame_model.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class CoupleEditingScreen extends StatefulWidget {
   final FrameModel frame;
@@ -21,7 +13,7 @@ class CoupleEditingScreen extends StatefulWidget {
   final String imagePath2;
   final String categoryId;
 
-  CoupleEditingScreen({
+  const CoupleEditingScreen({
     super.key,
     required this.frame,
     required this.imagePath1,
@@ -38,9 +30,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   late String _selectedImagePath1;
   late String _selectedImagePath2;
 
-  int _selectedImageIndex = 0; // 0 for image1, 1 for image2
+  int _selectedImageIndex = 0;
 
-  // Transformation state variables for both images
   late double _rotationAngle1 = 0.0;
   Offset _imageOffset1 = Offset.zero;
 
@@ -143,7 +134,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       },
       onScaleUpdate: (details) {
         setState(() {
-          final dampingFactor = 0.5;
+          const dampingFactor = 0.5;
           if (index == 0) {
             _rotationAngle1 += details.rotation * dampingFactor;
             _imageOffset1 += details.focalPoint - imageOffset;
@@ -154,7 +145,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         });
       },
       child: SizedBox(
-        height: frameHeight, // Set a fixed height constraint
+        height: frameHeight,
         width: frameWidth,
         child: Transform.translate(
           offset: imageOffset,

@@ -60,10 +60,9 @@ class _DetailScreenState extends State<DetailScreen> {
     final picker = ImagePicker();
 
     if (categoryId == '1') {
-      // For category 1, pick two images sequentially
       final XFile? image1 = await picker.pickImage(source: source);
 
-      if (image1 == null) return; // If the first image picking is canceled, stop here
+      if (image1 == null) return;
 
       final XFile? image2 = await picker.pickImage(source: source);
 
