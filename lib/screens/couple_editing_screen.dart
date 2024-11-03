@@ -27,10 +27,9 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   late String _selectedImagePath1;
   late String _selectedImagePath2;
-
   int _selectedImageIndex = 0;
 
-// Rotation angles and offsets for images
+  // Rotation angles and offsets for images
   late double _rotationAngle1 = 0.0;
   Offset _imageOffset1 = Offset.zero;
 
@@ -52,24 +51,21 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const double frameHeight = 500.0;
+    const double frameHeight = 700.0;
     const double frameWidth = 355.0;
 
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title:
-            const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
+        title: const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
         backgroundColor: WeddingColors.mainColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.image,
-                color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.image, color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(0),
           ),
           IconButton(
-            icon: Icon(Icons.image,
-                color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.image, color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(1),
           ),
         ],
@@ -84,37 +80,41 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-// First half of the frame (left side for image 1)
+                    // First half of the frame (left side for image 1)
                     Positioned(
                       left: 0,
                       top: 0,
                       width: frameWidth / 2,
                       height: frameHeight,
-                      child: _buildImageWithFrame(
-                        _selectedImagePath1,
-                        _rotationAngle1,
-                        _imageOffset1,
-                        0,
-                        frameHeight,
-                        frameWidth / 2,
+                      child: ClipRect( // Clip the left half to prevent overflow
+                        child: _buildImageWithFrame(
+                          _selectedImagePath1,
+                          _rotationAngle1,
+                          _imageOffset1,
+                          0,
+                          frameHeight,
+                          frameWidth / 2,
+                        ),
                       ),
                     ),
-// Second half of the frame (right side for image 2)
+                    // Second half of the frame (right side for image 2)
                     Positioned(
                       left: frameWidth / 2,
                       top: 0,
                       width: frameWidth / 2,
                       height: frameHeight,
-                      child: _buildImageWithFrame(
-                        _selectedImagePath2,
-                        _rotationAngle2,
-                        _imageOffset2,
-                        1,
-                        frameHeight,
-                        frameWidth / 2,
+                      child: ClipRect( // Clip the right half to prevent overflow
+                        child: _buildImageWithFrame(
+                          _selectedImagePath2,
+                          _rotationAngle2,
+                          _imageOffset2,
+                          1,
+                          frameHeight,
+                          frameWidth / 2,
+                        ),
                       ),
                     ),
-// Overlay frame image that covers both halves
+                    // Overlay frame image that covers both halves
                     IgnorePointer(
                       child: Image.network(
                         widget.frame.frameImage,
@@ -144,23 +144,21 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ) {
     return GestureDetector(
       onScaleUpdate: (details) {
-        setState(() {
-          const dampingFactor = 0.5;
+        if (_selectedImageIndex == index) {
+          setState(() {
+            const dampingFactor = 0.5;
 
-          if (index == 0) {
-            // Adjust the position for sliding (pan)
-            _imageOffset1 += details.focalPointDelta;
-
-            // Adjust the rotation
-            _rotationAngle1 += details.rotation * dampingFactor;
-          } else {
-            // Adjust the position for sliding (pan)
-            _imageOffset2 += details.focalPointDelta;
-
-            // Adjust the rotation
-            _rotationAngle2 += details.rotation * dampingFactor;
-          }
-        });
+            if (index == 0) {
+              // Adjust position with boundary restrictions for left image
+              _imageOffset1 = _clampOffset(_imageOffset1 + details.focalPointDelta, frameWidth, frameHeight);
+              _rotationAngle1 += details.rotation * dampingFactor;
+            } else {
+              // Adjust position with boundary restrictions for right image
+              _imageOffset2 = _clampOffset(_imageOffset2 + details.focalPointDelta, frameWidth, frameHeight);
+              _rotationAngle2 += details.rotation * dampingFactor;
+            }
+          });
+        }
       },
       child: SizedBox(
         height: frameHeight,
@@ -180,6 +178,13 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         ),
       ),
     );
+  }
+
+  Offset _clampOffset(Offset offset, double frameWidth, double frameHeight) {
+    // Adjust clamping to keep images within their respective half
+    double dx = offset.dx.clamp(-frameWidth / 4, frameWidth / 4); // Restrict within half frame
+    double dy = offset.dy.clamp(-frameHeight / 4, frameHeight / 4); // Restrict within frame height
+    return Offset(dx, dy);
   }
 
   Widget _buildStaticBottomSheet() {
@@ -224,10 +229,10 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   }
 
   Future<void> _pickNewImage() async {
-// Implementation for picking a new image
+    // Implementation for picking a new image
   }
 
   void _showExportDialog() {
-// Export dialog logic
+    // Export dialog logic
   }
 }
