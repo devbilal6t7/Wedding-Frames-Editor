@@ -45,7 +45,7 @@ class _EditingScreenState extends State<EditingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const double frameHeight = 500.0;
+    final double frameHeight = MediaQuery.of(context).size.height * 0.56; // 60% of screen height
     const double frameWidth = 355.0;
 
     return Scaffold(
@@ -79,14 +79,12 @@ class _EditingScreenState extends State<EditingScreen> {
                         },
                         onScaleUpdate: (details) {
                           setState(() {
-                            const rotationDampingFactor = 0.01;
+                            const rotationDampingFactor = 0.009;
                             _rotationAngle += details.rotation * rotationDampingFactor;
-
                             final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
                             _imageOffset = _startOffset + offsetDelta;
                           });
                         },
-
                         child: Transform.translate(
                           offset: _imageOffset,
                           child: Transform.rotate(
@@ -96,7 +94,7 @@ class _EditingScreenState extends State<EditingScreen> {
                                 color: Colors.transparent,
                               ),
                               imageProvider: FileImage(File(_selectedImagePath!)),
-                              minScale: PhotoViewComputedScale.contained,
+                              minScale: PhotoViewComputedScale.contained * 0.4,
                               maxScale: PhotoViewComputedScale.covered * 2,
                               basePosition: Alignment.center,
                             ),
