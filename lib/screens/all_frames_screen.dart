@@ -37,7 +37,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 title: const Text("Choose From Gallery"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.gallery, frame, widget.categoryId);
+                  await _pickImage(parentContext, ImageSource.gallery, frame, widget.categoryId, frame.type);
                 },
               ),
               ListTile(
@@ -45,7 +45,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 title: const Text("Take With Camera"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.camera, frame, widget.categoryId);
+                  await _pickImage(parentContext, ImageSource.camera, frame, widget.categoryId, frame.type);
                 },
               ),
             ],
@@ -56,7 +56,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source,
-      FrameModel frame, String categoryId) async {
+      FrameModel frame, String categoryId,String type) async {
     final picker = ImagePicker();
 
     if (categoryId == '1') {
@@ -75,6 +75,8 @@ class _DetailScreenState extends State<DetailScreen> {
               imagePath1: image1.path,
               imagePath2: image2.path,
               categoryId: categoryId,
+              type: type,
+
             ),
           ),
         );

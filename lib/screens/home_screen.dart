@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
-                      parentContext, ImageSource.gallery, frame, categoryId);
+                      parentContext, ImageSource.gallery, frame, categoryId, frame.type);
                 },
               ),
               ListTile(
@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
-                      parentContext, ImageSource.camera, frame, categoryId);
+                      parentContext, ImageSource.camera, frame, categoryId,frame.type);
                 },
               ),
             ],
@@ -281,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source,
-      FrameModel frame, String categoryId) async {
+      FrameModel frame, String categoryId, String type) async {
     final picker = ImagePicker();
 
     if (categoryId == '1') {
@@ -301,6 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
               imagePath1: image1.path,
               imagePath2: image2.path,
               categoryId: categoryId,
+              type: type,
             ),
           ),
         );
