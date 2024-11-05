@@ -54,7 +54,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     super.initState();
     _selectedImagePath1 = widget.imagePath1;
     _selectedImagePath2 = widget.imagePath2;
-    print("This is type of frame ${widget.type}");
   }
 
   void _selectImage(int index) {
@@ -455,7 +454,9 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         }
       }
     } catch (e) {
-      print("Error saving image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Saving Image! Try Again')),
+      );
     }
   }
 
@@ -475,7 +476,9 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
             text: 'Check out my wedding frame!');
       }
     } catch (e) {
-      print("Error sharing image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Sharing Image! Try Again')),
+      );
     }
   }
 
@@ -487,7 +490,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
     } catch (e) {
-      print("Error capturing image: $e");
       return null;
     }
   }

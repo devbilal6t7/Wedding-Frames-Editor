@@ -361,7 +361,9 @@ class _EditingScreenState extends State<EditingScreen> {
         }
       }
     } catch (e) {
-      print("Error saving image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Saving Image! Try Again')),
+      );
     }
   }
 
@@ -381,7 +383,9 @@ class _EditingScreenState extends State<EditingScreen> {
             text: 'Check out my wedding frame!');
       }
     } catch (e) {
-      print("Error sharing image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Sharing Image! Try Again')),
+      );
     }
   }
 
@@ -393,7 +397,6 @@ class _EditingScreenState extends State<EditingScreen> {
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
     } catch (e) {
-      print("Error capturing image: $e");
       return null;
     }
   }
