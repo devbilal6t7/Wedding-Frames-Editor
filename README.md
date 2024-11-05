@@ -1,6 +1,6 @@
 # wedding_frames_editor
 
-A new Flutter project.
+BISM Soft Project.
 
 ## Getting Started
 
