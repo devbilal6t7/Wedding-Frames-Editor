@@ -1,20 +1,28 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import '../models/frame_model.dart';
 import '../providers/frames_provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CoupleEditingScreen extends StatefulWidget {
-   FrameModel frame;
+  FrameModel frame;
   final String imagePath1;
   final String imagePath2;
   final String categoryId;
   final String type;
 
-   CoupleEditingScreen({
+  CoupleEditingScreen({
     super.key,
     required this.frame,
     required this.imagePath1,
@@ -26,7 +34,6 @@ class CoupleEditingScreen extends StatefulWidget {
   @override
   State<CoupleEditingScreen> createState() => _CoupleEditingScreenState();
 }
-
 class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   late String _selectedImagePath1;
@@ -40,6 +47,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   late double _rotationAngle2 = 0.0;
   Offset _imageOffset2 = Offset.zero;
 
+  final ImagePicker _picker = ImagePicker(); // Initialize the ImagePicker
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +61,20 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     setState(() {
       _selectedImageIndex = index;
     });
+  }
+
+  Future<void> _pickNewImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        // Update the selected image path based on the current selected index
+        if (_selectedImageIndex == 0) {
+          _selectedImagePath1 = pickedFile.path;
+        } else {
+          _selectedImagePath2 = pickedFile.path;
+        }
+      });
+    }
   }
 
   @override
@@ -346,11 +369,126 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     );
   }
 
-  Future<void> _pickNewImage() async {
-    // Implementation for picking a new image
-  }
+
 
   void _showExportDialog() {
-    // Export dialog logic
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: WeddingColors.mainColor, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(WeddingAssets.export, height: 30, width: 30),
+              const SizedBox(height: 10),
+              const Text('Select an Option', style: TextStyle(fontSize: 18)),
+              const SizedBox(height: 20),
+              _buildDialogButton(
+                'Download/Save',
+                WeddingAssets.download,
+                    () {
+                  _saveImage();
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildDialogButton(
+                'Share With Friends',
+                WeddingAssets.share,
+                    () {
+                  _shareImage();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDialogButton(String text, String icon, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ListTile(
+        shape: OutlineInputBorder(
+          borderSide: BorderSide(color: WeddingColors.mainColor, width: 2),
+        ),
+        leading: Image.asset(icon, height: 24, width: 24),
+        title: Text(text),
+        onTap: onPressed,
+      ),
+    );
+  }
+
+  Future<void> _saveImage() async {
+    try {
+      final Uint8List? imageData = await _capturePng();
+      if (imageData != null) {
+        if (await _requestPermissions()) {
+          final result = await ImageGallerySaverPlus.saveImage(
+            imageData,
+            quality: 100,
+            name: "wedding_frame_${DateTime.now().millisecondsSinceEpoch}",
+          );
+
+          if (result["isSuccess"] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image saved to gallery')),
+            );
+
+            final directory = await getExternalStorageDirectory();
+            final path = '${directory?.path}/wedding_frames';
+            await Directory(path).create(recursive: true);
+
+            final filePath =
+                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final file = File(filePath);
+            await file.writeAsBytes(imageData);
+          }
+        }
+      }
+    } catch (e) {
+      print("Error saving image: $e");
+    }
+  }
+
+  Future<bool> _requestPermissions() async {
+    final status = await Permission.storage.request();
+    return status.isGranted;
+  }
+
+  Future<void> _shareImage() async {
+    try {
+      final Uint8List? imageData = await _capturePng();
+      if (imageData != null) {
+        final tempDir = await getTemporaryDirectory();
+        final file = await File('${tempDir.path}/wedding_frame.png').create();
+        await file.writeAsBytes(imageData);
+        await Share.shareXFiles([XFile(file.path)],
+            text: 'Check out my wedding frame!');
+      }
+    } catch (e) {
+      print("Error sharing image: $e");
+    }
+  }
+
+  Future<Uint8List?> _capturePng() async {
+    try {
+      RenderRepaintBoundary boundary = _captureKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      var image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      print("Error capturing image: $e");
+      return null;
+    }
   }
 }
