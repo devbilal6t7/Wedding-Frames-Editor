@@ -7,12 +7,14 @@ import 'package:wedding_frames_editor/models/frame_model.dart';
 import '../consts/app_colors.dart';
 import 'couple_editing_screen.dart';
 import 'editing_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class DetailScreen extends StatefulWidget {
   final String categoryId;
   final String title;
 
-  const DetailScreen({super.key, required this.categoryId, required this.title});
+  const DetailScreen(
+      {super.key, required this.categoryId, required this.title});
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -33,19 +35,29 @@ class _DetailScreenState extends State<DetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Image.asset(WeddingAssets.gallery, height: 25,width: 25,),
+                leading: Image.asset(
+                  WeddingAssets.gallery,
+                  height: 25,
+                  width: 25,
+                ),
                 title: const Text("Choose From Gallery"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.gallery, frame, widget.categoryId, frame.type);
+                  await _pickImage(parentContext, ImageSource.gallery, frame,
+                      widget.categoryId, frame.type);
                 },
               ),
               ListTile(
-                leading: Image.asset(WeddingAssets.camera, height: 25,width: 25,),
+                leading: Image.asset(
+                  WeddingAssets.camera,
+                  height: 25,
+                  width: 25,
+                ),
                 title: const Text("Take With Camera"),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.camera, frame, widget.categoryId, frame.type);
+                  await _pickImage(parentContext, ImageSource.camera, frame,
+                      widget.categoryId, frame.type);
                 },
               ),
             ],
@@ -56,35 +68,42 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source,
-      FrameModel frame, String categoryId,String type) async {
+      FrameModel frame, String categoryId, String type) async {
     final picker = ImagePicker();
 
-    if (categoryId == '1') {
-      final XFile? image1 = await picker.pickImage(source: source);
 
-      if (image1 == null) return;
+      if (categoryId == '1') {
+        // For category 1, allow selection of multiple images
+        final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
-      final XFile? image2 = await picker.pickImage(source: source);
-
-      if (image2 != null && Navigator.of(context, rootNavigator: true).mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CoupleEditingScreen(
-              frame: frame,
-              imagePath1: image1.path,
-              imagePath2: image2.path,
-              categoryId: categoryId,
-              type: type,
-
+        if (images.length == 2) {
+          // Ensure exactly two images are selected
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CoupleEditingScreen(
+                frame: frame,
+                imagePath1: images[0].path,
+                imagePath2: images[1].path,
+                categoryId: categoryId,
+                type: type,
+              ),
             ),
-          ),
-        );
-      }
-    } else {
+          );
+        } else if (images.length != 2) {
+          // Show an error if the user did not select exactly two images
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select exactly 2 images.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
       final XFile? pickedFile = await picker.pickImage(source: source);
 
-      if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
+      if (pickedFile != null &&
+          Navigator.of(context, rootNavigator: true).mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -98,7 +117,6 @@ class _DetailScreenState extends State<DetailScreen> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -116,11 +134,14 @@ class _DetailScreenState extends State<DetailScreen> {
             .fetchFrames(widget.categoryId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: WeddingColors.mainColor));
+            return Center(
+                child:
+                    CircularProgressIndicator(color: WeddingColors.mainColor));
           } else if (snapshot.hasError) {
             return const Center(child: Text("Error loading frames"));
           } else {
-            final frames = Provider.of<FramesProvider>(context).getFrames(widget.categoryId);
+            final frames = Provider.of<FramesProvider>(context)
+                .getFrames(widget.categoryId);
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
@@ -133,7 +154,8 @@ class _DetailScreenState extends State<DetailScreen> {
                 itemCount: frames.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                    onTap: () => _showImagePickerOptions(context, frames[index]),
+                    onTap: () =>
+                        _showImagePickerOptions(context, frames[index]),
                     child: _buildFrameItem(frames[index]),
                   );
                 },
@@ -148,12 +170,11 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildFrameItem(FrameModel frame) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
-      child: Image.network(
-        frame.frameImage,
+      child: CachedNetworkImage(
+        imageUrl: frame.frameImage,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(Icons.broken_image, size: 60);
-        },
+        placeholder: (context, url) => CircularProgressIndicator(color: WeddingColors.mainColor,),
+        errorWidget: (context, url, error) => Icon(Icons.error),
       ),
     );
   }

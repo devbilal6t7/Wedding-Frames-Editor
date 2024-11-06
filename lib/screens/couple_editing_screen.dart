@@ -34,20 +34,20 @@ class CoupleEditingScreen extends StatefulWidget {
   @override
   State<CoupleEditingScreen> createState() => _CoupleEditingScreenState();
 }
+
 class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   late String _selectedImagePath1;
   late String _selectedImagePath2;
   int _selectedImageIndex = 0;
 
-  // Rotation angles and offsets for images
   late double _rotationAngle1 = 0.0;
   Offset _imageOffset1 = Offset.zero;
 
   late double _rotationAngle2 = 0.0;
   Offset _imageOffset2 = Offset.zero;
 
-  final ImagePicker _picker = ImagePicker(); // Initialize the ImagePicker
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -66,7 +66,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        // Update the selected image path based on the current selected index
         if (_selectedImageIndex == 0) {
           _selectedImagePath1 = pickedFile.path;
         } else {
@@ -78,14 +77,12 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen height to adjust the frame height dynamically
     final double screenHeight = MediaQuery.of(context).size.height;
     const double frameWidth = 355.0;
     const double toolbarHeight = 80.0;
     bool isPortrait = widget.type.contains('p');
 
-    // Calculate frame height as a portion of screen height minus other UI elements
-    final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30); // Adjust as needed
+    final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30);
 
     return Scaffold(
       appBar: AppBar(
@@ -116,7 +113,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // First half of the frame (top for portrait, left for landscape)
                       Positioned(
                         left: isPortrait ? 0 : null,
                         top: isPortrait ? 0 : null,
@@ -151,7 +147,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                           ),
                         ),
                       ),
-                      // Overlay frame image that covers both halves
                       IgnorePointer(
                         child: Image.network(
                           widget.frame.frameImage,
@@ -173,8 +168,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     );
   }
 
-
-
   Widget _buildImageWithFrame(
       String imagePath,
       double rotationAngle,
@@ -188,15 +181,12 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         if (_selectedImageIndex == index) {
           setState(() {
             const dampingFactor = 0.5;
-
             if (index == 0) {
-              // Adjust position with boundary restrictions for left or top image
               _imageOffset1 = _clampOffset(_imageOffset1 + details.focalPointDelta, frameWidth, frameHeight);
-              _rotationAngle1 += details.rotation * dampingFactor;
+              _rotationAngle1 = details.rotation * dampingFactor;
             } else {
-              // Adjust position with boundary restrictions for right or bottom image
               _imageOffset2 = _clampOffset(_imageOffset2 + details.focalPointDelta, frameWidth, frameHeight);
-              _rotationAngle2 += details.rotation * dampingFactor;
+              _rotationAngle2 = details.rotation * dampingFactor;
             }
           });
         }
@@ -222,9 +212,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   }
 
   Offset _clampOffset(Offset offset, double frameWidth, double frameHeight) {
-    // Adjust clamping to keep images within their respective half
-    double dx = offset.dx.clamp(-frameWidth / 4, frameWidth / 4); // Restrict within half frame
-    double dy = offset.dy.clamp(-frameHeight / 4, frameHeight / 4); // Restrict within frame height
+    double dx = offset.dx.clamp(-frameWidth / 4, frameWidth / 4);
+    double dy = offset.dy.clamp(-frameHeight / 4, frameHeight / 4);
     return Offset(dx, dy);
   }
 
@@ -277,7 +266,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title
             Container(
               clipBehavior: Clip.hardEdge,
               height: 50,
@@ -297,7 +285,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
             Expanded(
               child: frames.isEmpty
                   ? const Center(child: CircularProgressIndicator())
@@ -352,6 +339,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       },
     );
   }
+
   Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -367,8 +355,6 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ],
     );
   }
-
-
 
   void _showExportDialog() {
     showDialog(
@@ -446,8 +432,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
             final path = '${directory?.path}/wedding_frames';
             await Directory(path).create(recursive: true);
 
-            final filePath =
-                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
             final file = File(filePath);
             await file.writeAsBytes(imageData);
           }
@@ -472,8 +457,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         final tempDir = await getTemporaryDirectory();
         final file = await File('${tempDir.path}/wedding_frame.png').create();
         await file.writeAsBytes(imageData);
-        await Share.shareXFiles([XFile(file.path)],
-            text: 'Check out my wedding frame!');
+        await Share.shareXFiles([XFile(file.path)], text: 'Check out my wedding frame!');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -484,8 +468,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   Future<Uint8List?> _capturePng() async {
     try {
-      RenderRepaintBoundary boundary = _captureKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       var image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();

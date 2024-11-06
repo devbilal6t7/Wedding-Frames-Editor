@@ -43,6 +43,7 @@ dependencies:
   shimmer: ^3.0.0
   image_gallery_saver_plus: ^3.0.5
   permission_handler: ^11.3.1
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

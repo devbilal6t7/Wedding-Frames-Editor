@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -62,8 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return _buildShimmerLoading();
             } else if (snapshot.hasError) {
-              return const Center(
-                child: Text("Check Your Internet Connection"),
+              return  RefreshIndicator(
+                onRefresh: _refreshCategories,
+                child: const Center(
+                  child: Text("Check Your Internet Connection"),
+                ),
               );
             } else {
               final categories =
@@ -284,29 +288,36 @@ class _HomeScreenState extends State<HomeScreen> {
       FrameModel frame, String categoryId, String type) async {
     final picker = ImagePicker();
 
-    if (categoryId == '1') {
-      // For category 1, pick two images sequentially
-      final XFile? image1 = await picker.pickImage(source: source);
 
-      if (image1 == null) return; // If the first image picking is canceled, stop here
 
-      final XFile? image2 = await picker.pickImage(source: source);
+      if (categoryId == '1') {
+        // For category 1, allow selection of multiple images
+        final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
-      if (image2 != null && Navigator.of(context, rootNavigator: true).mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CoupleEditingScreen(
-              frame: frame,
-              imagePath1: image1.path,
-              imagePath2: image2.path,
-              categoryId: categoryId,
-              type: type,
+        if (images.length == 2) {
+          // Ensure exactly two images are selected
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CoupleEditingScreen(
+                frame: frame,
+                imagePath1: images[0].path,
+                imagePath2: images[1].path,
+                categoryId: categoryId,
+                type: type,
+              ),
             ),
-          ),
-        );
-      }
-    } else {
+          );
+        } else if (images.length != 2) {
+          // Show an error if the user did not select exactly two images
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select exactly 2 images.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
       // Default behavior: pick one image
       final XFile? pickedFile = await picker.pickImage(source: source);
 
@@ -330,14 +341,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFrameThumbnail(String imageUrl) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
-      child: Image.network(
-        imageUrl,
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
         height: 120,
         width: 90,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(Icons.broken_image, size: 60);
-        },
+        progressIndicatorBuilder: (context, url, downloadProgress) =>
+            CircularProgressIndicator(value: downloadProgress.progress, color: WeddingColors.mainColor,),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
       ),
     );
   }
