@@ -91,11 +91,11 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         backgroundColor: WeddingColors.mainColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.image, color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.looks_one, color: _selectedImageIndex == 0 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(0),
           ),
           IconButton(
-            icon: Icon(Icons.image, color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
+            icon: Icon(Icons.looks_two, color: _selectedImageIndex == 1 ? Colors.white : Colors.grey),
             onPressed: () => _selectImage(1),
           ),
         ],
@@ -231,6 +231,9 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          _buildIconButton(WeddingAssets.swap, 'Swap Photo', () {
+            _swapImages();
+          }),
           _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
             _pickNewImage();
           }),
@@ -244,6 +247,14 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ),
     );
   }
+  void _swapImages() {
+    setState(() {
+      String temp = _selectedImagePath1;
+      _selectedImagePath1 = _selectedImagePath2;
+      _selectedImagePath2 = temp;
+    });
+  }
+
 
   void _openFramesBottomSheet(String categoryId) async {
     final framesProvider = Provider.of<FramesProvider>(context, listen: false);
