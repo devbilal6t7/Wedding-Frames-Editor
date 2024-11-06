@@ -20,8 +20,12 @@ class EditingScreen extends StatefulWidget {
   final String imagePath;
   final String categoryId;
 
-  EditingScreen(
-      {super.key, required this.frame, required this.imagePath, required this.categoryId, });
+  EditingScreen({
+    super.key,
+    required this.frame,
+    required this.imagePath,
+    required this.categoryId,
+  });
 
   @override
   State<EditingScreen> createState() => _EditingScreenState();
@@ -30,7 +34,6 @@ class EditingScreen extends StatefulWidget {
 class _EditingScreenState extends State<EditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   String? _selectedImagePath;
-
 
   late double _rotationAngle = 0.0;
   Offset _imageOffset = Offset.zero;
@@ -80,7 +83,9 @@ class _EditingScreenState extends State<EditingScreen> {
                         onScaleUpdate: (details) {
                           setState(() {
                             const rotationDampingFactor = 0.009;
+                            // Update rotation angle
                             _rotationAngle += details.rotation * rotationDampingFactor;
+                            // Calculate movement offset
                             final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
                             _imageOffset = _startOffset + offsetDelta;
                           });
@@ -120,8 +125,6 @@ class _EditingScreenState extends State<EditingScreen> {
       bottomSheet: _buildStaticBottomSheet(),
     );
   }
-
-
 
   Widget _buildStaticBottomSheet() {
     return Container(
@@ -172,7 +175,6 @@ class _EditingScreenState extends State<EditingScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title
             Container(
               clipBehavior: Clip.hardEdge,
               height: 50,
@@ -192,7 +194,6 @@ class _EditingScreenState extends State<EditingScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
             Expanded(
               child: frames.isEmpty
                   ? const Center(child: CircularProgressIndicator())
@@ -247,8 +248,6 @@ class _EditingScreenState extends State<EditingScreen> {
       },
     );
   }
-
-
 
   Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
     return Column(
@@ -353,8 +352,7 @@ class _EditingScreenState extends State<EditingScreen> {
             final path = '${directory?.path}/wedding_frames';
             await Directory(path).create(recursive: true);
 
-            final filePath =
-                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
             final file = File(filePath);
             await file.writeAsBytes(imageData);
           }
@@ -379,8 +377,7 @@ class _EditingScreenState extends State<EditingScreen> {
         final tempDir = await getTemporaryDirectory();
         final file = await File('${tempDir.path}/wedding_frame.png').create();
         await file.writeAsBytes(imageData);
-        await Share.shareXFiles([XFile(file.path)],
-            text: 'Check out my wedding frame!');
+        await Share.shareXFiles([XFile(file.path)], text: 'Check out my wedding frame!');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -391,8 +388,7 @@ class _EditingScreenState extends State<EditingScreen> {
 
   Future<Uint8List?> _capturePng() async {
     try {
-      RenderRepaintBoundary boundary = _captureKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       var image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();

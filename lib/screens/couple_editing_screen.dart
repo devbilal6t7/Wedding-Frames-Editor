@@ -78,10 +78,12 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
-    const double frameWidth = 355.0;
+    final double screenWidth = MediaQuery.of(context).size.width;
     const double toolbarHeight = 80.0;
     bool isPortrait = widget.type.contains('p');
 
+    // Set frame width and height based on screen orientation
+    final double frameWidth = isPortrait ? screenWidth : screenWidth / 2;
     final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30);
 
     return Scaffold(
@@ -109,50 +111,49 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                 key: _captureKey,
                 child: SizedBox(
                   height: frameHeight,
-                  width: frameWidth,
+                  width: screenWidth,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Positioned(
-                        left: isPortrait ? 0 : null,
-                        top: isPortrait ? 0 : null,
-                        right: isPortrait ? null : 0,
-                        bottom: isPortrait ? null : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
+                        left: 0,
+                        top: 0,
+                        width: frameWidth,
+                        height: frameHeight,
                         child: ClipRect(
                           child: _buildImageWithFrame(
                             _selectedImagePath1,
                             _rotationAngle1,
                             _imageOffset1,
                             0,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
+                            frameHeight,
+                            frameWidth,
                           ),
                         ),
                       ),
                       Positioned(
-                        left: isPortrait ? 0 : frameWidth / 2,
-                        top: isPortrait ? frameHeight / 2 : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
+                        right: 0,
+                        top: 0,
+                        width: frameWidth,
+                        height: frameHeight,
                         child: ClipRect(
                           child: _buildImageWithFrame(
                             _selectedImagePath2,
                             _rotationAngle2,
                             _imageOffset2,
                             1,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
+                            frameHeight,
+                            frameWidth,
                           ),
                         ),
                       ),
                       IgnorePointer(
                         child: Image.network(
                           widget.frame.frameImage,
-                          width: frameWidth,
+                          width: isPortrait ? screenWidth : screenWidth /0.5,
                           height: frameHeight,
-                          fit: BoxFit.cover,
+
+                          fit: isPortrait ? BoxFit.cover : null,
                         ),
                       ),
                     ],
@@ -247,6 +248,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ),
     );
   }
+
   void _swapImages() {
     setState(() {
       String temp = _selectedImagePath1;
@@ -255,8 +257,11 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     });
   }
 
+// Additional methods (_openFramesBottomSheet, _showExportDialog, etc.) remain unchanged.
 
-  void _openFramesBottomSheet(String categoryId) async {
+
+
+void _openFramesBottomSheet(String categoryId) async {
     final framesProvider = Provider.of<FramesProvider>(context, listen: false);
     if (framesProvider.getFrames(categoryId).isEmpty) {
       await framesProvider.fetchFrames(categoryId);
