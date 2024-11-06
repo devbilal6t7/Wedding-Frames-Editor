@@ -346,10 +346,18 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 120,
         width: 90,
         fit: BoxFit.cover,
-        progressIndicatorBuilder: (context, url, downloadProgress) =>
-            CircularProgressIndicator(value: downloadProgress.progress, color: WeddingColors.mainColor,),
+        placeholder: (context, url) => Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(
+            height: 120,
+            width: 90,
+            color: Colors.white,
+          ),
+        ),
         errorWidget: (context, url, error) => const Icon(Icons.error),
       ),
     );
   }
+
 }

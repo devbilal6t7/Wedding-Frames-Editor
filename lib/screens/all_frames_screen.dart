@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:wedding_frames_editor/consts/assets.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
@@ -73,11 +74,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
 
       if (categoryId == '1') {
-        // For category 1, allow selection of multiple images
         final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
         if (images.length == 2) {
-          // Ensure exactly two images are selected
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -91,7 +90,6 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           );
         } else if (images.length != 2) {
-          // Show an error if the user did not select exactly two images
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please select exactly 2 images.'),
@@ -173,8 +171,16 @@ class _DetailScreenState extends State<DetailScreen> {
       child: CachedNetworkImage(
         imageUrl: frame.frameImage,
         fit: BoxFit.cover,
-        placeholder: (context, url) => CircularProgressIndicator(color: WeddingColors.mainColor,),
-        errorWidget: (context, url, error) => Icon(Icons.error),
+        placeholder: (context, url) => Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.white,
+          ),
+        ),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
       ),
     );
   }
