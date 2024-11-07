@@ -11,6 +11,7 @@ import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
 import 'all_frames_screen.dart';
 import 'couple_editing_screen.dart';
+import 'couple_landscape_mode.dart';
 import 'editing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -289,39 +290,49 @@ class _HomeScreenState extends State<HomeScreen> {
     final picker = ImagePicker();
 
 
+    if (categoryId == '1') {
+      final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
-      if (categoryId == '1') {
-        // For category 1, allow selection of multiple images
-        final List<XFile> images = await picker.pickMultiImage(limit: 2);
-
-        if (images.length == 2) {
-          // Ensure exactly two images are selected
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CoupleEditingScreen(
-                frame: frame,
-                imagePath1: images[0].path,
-                imagePath2: images[1].path,
-                categoryId: categoryId,
-                type: type,
-              ),
+      if (images.length == 2 && frame.type.contains("p")) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CoupleEditingScreen(
+              frame: frame,
+              imagePath1: images[0].path,
+              imagePath2: images[1].path,
+              categoryId: categoryId,
+              type: type,
             ),
-          );
-        } else if (images.length != 2) {
-          // Show an error if the user did not select exactly two images
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please select exactly 2 images.'),
-              backgroundColor: Colors.red,
+          ),
+        );
+      } else if (images.length == 2 && frame.type.contains("l")){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CoupleLandscape(
+              frame: frame,
+              imagePath1: images[0].path,
+              imagePath2: images[1].path,
+              categoryId: categoryId,
+              type: type,
             ),
-          );
-        }
-      } else {
-      // Default behavior: pick one image
+          ),
+        );
+      } else if (images.length != 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select exactly 2 images.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+    else {
       final XFile? pickedFile = await picker.pickImage(source: source);
 
-      if (pickedFile != null && Navigator.of(context, rootNavigator: true).mounted) {
+      if (pickedFile != null &&
+          Navigator.of(context, rootNavigator: true).mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(

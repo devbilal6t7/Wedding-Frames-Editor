@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:wedding_frames_editor/consts/assets.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
+import 'package:wedding_frames_editor/screens/couple_landscape_mode.dart';
 import '../consts/app_colors.dart';
 import 'couple_editing_screen.dart';
 import 'editing_screen.dart';
@@ -76,11 +77,24 @@ class _DetailScreenState extends State<DetailScreen> {
       if (categoryId == '1') {
         final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
-        if (images.length == 2) {
+        if (images.length == 2 && frame.type.contains("p")) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => CoupleEditingScreen(
+                frame: frame,
+                imagePath1: images[0].path,
+                imagePath2: images[1].path,
+                categoryId: categoryId,
+                type: type,
+              ),
+            ),
+          );
+        } else if (images.length == 2 && frame.type.contains("l")){
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CoupleLandscape(
                 frame: frame,
                 imagePath1: images[0].path,
                 imagePath2: images[1].path,
@@ -97,7 +111,8 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           );
         }
-      } else {
+      }
+      else {
       final XFile? pickedFile = await picker.pickImage(source: source);
 
       if (pickedFile != null &&

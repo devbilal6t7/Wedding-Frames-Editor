@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:wedding_frames_editor/screens/couple_landscape_mode.dart';
+import 'package:wedding_frames_editor/screens/couple_editing_screen.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import '../models/frame_model.dart';
@@ -16,14 +16,14 @@ import '../providers/frames_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
-class CoupleEditingScreen extends StatefulWidget {
+class CoupleLandscape extends StatefulWidget {
   FrameModel frame;
   final String imagePath1;
   final String imagePath2;
   final String categoryId;
   final String type;
 
-  CoupleEditingScreen({
+  CoupleLandscape({
     super.key,
     required this.frame,
     required this.imagePath1,
@@ -33,10 +33,10 @@ class CoupleEditingScreen extends StatefulWidget {
   });
 
   @override
-  State<CoupleEditingScreen> createState() => _CoupleEditingScreenState();
+  State<CoupleLandscape> createState() => _CoupleLandscapeState();
 }
 
-class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
+class _CoupleLandscapeState extends State<CoupleLandscape> {
   final GlobalKey _captureKey = GlobalKey();
   late String _selectedImagePath1;
   late String _selectedImagePath2;
@@ -79,10 +79,11 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
-    const double frameWidth = 355.0;
+    final double screenWidth = MediaQuery.of(context).size.width;
     const double toolbarHeight = 80.0;
     bool isPortrait = widget.type.contains('p');
 
+    final double frameWidth = isPortrait ? screenWidth : screenWidth / 2;
     final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30);
 
     return Scaffold(
@@ -110,50 +111,49 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                 key: _captureKey,
                 child: SizedBox(
                   height: frameHeight,
-                  width: frameWidth,
+                  width: screenWidth,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Positioned(
-                        left: isPortrait ? 0 : null,
-                        top: isPortrait ? 0 : null,
-                        right: isPortrait ? null : 0,
-                        bottom: isPortrait ? null : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
+                        left: 0,
+                        top: 0,
+                        width: frameWidth,
+                        height: frameHeight,
                         child: ClipRect(
                           child: _buildImageWithFrame(
                             _selectedImagePath1,
                             _rotationAngle1,
                             _imageOffset1,
                             0,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
+                            frameHeight/2,
+                            frameWidth /2,
                           ),
                         ),
                       ),
                       Positioned(
-                        left: isPortrait ? 0 : frameWidth / 2,
-                        top: isPortrait ? frameHeight / 2 : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
+                        right: 0,
+                        top: 0,
+                        width: frameWidth,
+                        height: frameHeight,
                         child: ClipRect(
                           child: _buildImageWithFrame(
                             _selectedImagePath2,
                             _rotationAngle2,
                             _imageOffset2,
                             1,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
+                            frameHeight/2,
+                            frameWidth/2,
                           ),
                         ),
                       ),
                       IgnorePointer(
                         child: Image.network(
                           widget.frame.frameImage,
-                          width: isPortrait ? frameWidth : frameWidth/0.1,
-                          height:  isPortrait ? frameHeight : frameHeight/3,
-                          fit: BoxFit.cover,
+                          width: isPortrait ? screenWidth : screenWidth /0.5,
+                          height: frameHeight,
+
+                          fit: isPortrait ? BoxFit.cover : null,
                         ),
                       ),
                     ],
@@ -193,18 +193,22 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         }
       },
       child: SizedBox(
-        height: frameHeight,
-        width: frameWidth,
+        height: frameHeight /2 ,
+        width: frameWidth/2,
         child: Transform.translate(
           offset: index == 0 ? _imageOffset1 : _imageOffset2,
           child: Transform.rotate(
             angle: rotationAngle,
-            child: PhotoView(
+            child: PhotoView.customChild(
               backgroundDecoration: const BoxDecoration(color: Colors.transparent),
-              imageProvider: FileImage(File(imagePath)),
-              minScale: PhotoViewComputedScale.contained * 0.02,
+              customSize: Size(frameWidth, frameHeight),
+              minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2,
               basePosition: Alignment.center,
+              child: Image.file(
+                File(imagePath),
+                height: frameHeight / 5,
+              ),
             ),
           ),
         ),
@@ -248,6 +252,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       ),
     );
   }
+
   void _swapImages() {
     setState(() {
       String temp = _selectedImagePath1;
@@ -255,6 +260,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       _selectedImagePath2 = temp;
     });
   }
+
+
 
 
   void _openFramesBottomSheet(String categoryId) async {
@@ -317,7 +324,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
                       // Use a post-frame callback to perform navigation or state updates
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!frame.type.contains("l")) {
+                        if (!frame.type.contains("p")) {
                           // For landscape frames, update the frame without navigation
                           setState(() {
                             widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
@@ -326,7 +333,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
                           // For portrait frames, navigate to the new screen
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (context) => CoupleLandscape(
+                              builder: (context) => CoupleEditingScreen(
                                 categoryId: categoryId,
                                 frame: frame,
                                 imagePath1: _selectedImagePath1,
@@ -372,6 +379,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       },
     );
   }
+
+
 
   Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
     return Column(
