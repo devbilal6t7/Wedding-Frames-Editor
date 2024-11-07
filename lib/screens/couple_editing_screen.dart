@@ -8,13 +8,14 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:wedding_frames_editor/screens/couple_landscape_mode.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import '../models/frame_model.dart';
 import '../providers/frames_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
+
+import 'couple_landscape_mode.dart';
 
 class CoupleEditingScreen extends StatefulWidget {
   FrameModel frame;
@@ -50,11 +51,26 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
+  bool _isFrameLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _selectedImagePath1 = widget.imagePath1;
     _selectedImagePath2 = widget.imagePath2;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadFrame();
+  }
+
+  Future<void> _loadFrame() async {
+    await precacheImage(NetworkImage(widget.frame.frameImage), context);
+    setState(() {
+      _isFrameLoaded = true;
+    });
   }
 
   void _selectImage(int index) {
@@ -102,70 +118,76 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         ],
       ),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              RepaintBoundary(
-                key: _captureKey,
-                child: SizedBox(
-                  height: frameHeight,
-                  width: frameWidth,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        left: isPortrait ? 0 : null,
-                        top: isPortrait ? 0 : null,
-                        right: isPortrait ? null : 0,
-                        bottom: isPortrait ? null : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
-                        child: ClipRect(
-                          child: _buildImageWithFrame(
-                            _selectedImagePath1,
-                            _rotationAngle1,
-                            _imageOffset1,
-                            0,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: isPortrait ? 0 : frameWidth / 2,
-                        top: isPortrait ? frameHeight / 2 : 0,
-                        width: isPortrait ? frameWidth : frameWidth / 2,
-                        height: isPortrait ? frameHeight / 2 : frameHeight,
-                        child: ClipRect(
-                          child: _buildImageWithFrame(
-                            _selectedImagePath2,
-                            _rotationAngle2,
-                            _imageOffset2,
-                            1,
-                            isPortrait ? frameHeight / 2 : frameHeight,
-                            isPortrait ? frameWidth : frameWidth / 2,
-                          ),
-                        ),
-                      ),
-                      IgnorePointer(
-                        child: Image.network(
-                          widget.frame.frameImage,
-                          width: isPortrait ? frameWidth : frameWidth/0.1,
-                          height:  isPortrait ? frameHeight : frameHeight/3,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
+        child: _isFrameLoaded
+            ? _buildContent(frameWidth, frameHeight, isPortrait) // Display content when frame is loaded
+            :  Center(child: CircularProgressIndicator(color: WeddingColors.mainColor,)), // Show loader until frame is loaded
       ),
       bottomSheet: _buildStaticBottomSheet(),
+    );
+  }
+
+  Widget _buildContent(double frameWidth, double frameHeight, bool isPortrait) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          RepaintBoundary(
+            key: _captureKey,
+            child: SizedBox(
+              height: frameHeight,
+              width: frameWidth,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    left: isPortrait ? 0 : null,
+                    top: isPortrait ? 0 : null,
+                    right: isPortrait ? null : 0,
+                    bottom: isPortrait ? null : 0,
+                    width: isPortrait ? frameWidth : frameWidth / 2,
+                    height: isPortrait ? frameHeight / 2 : frameHeight,
+                    child: ClipRect(
+                      child: _buildImageWithFrame(
+                        _selectedImagePath1,
+                        _rotationAngle1,
+                        _imageOffset1,
+                        0,
+                        isPortrait ? frameHeight / 2 : frameHeight,
+                        isPortrait ? frameWidth : frameWidth / 2,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: isPortrait ? 0 : frameWidth / 2,
+                    top: isPortrait ? frameHeight / 2 : 0,
+                    width: isPortrait ? frameWidth : frameWidth / 2,
+                    height: isPortrait ? frameHeight / 2 : frameHeight,
+                    child: ClipRect(
+                      child: _buildImageWithFrame(
+                        _selectedImagePath2,
+                        _rotationAngle2,
+                        _imageOffset2,
+                        1,
+                        isPortrait ? frameHeight / 2 : frameHeight,
+                        isPortrait ? frameWidth : frameWidth / 2,
+                      ),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Image.network(
+                      widget.frame.frameImage,
+                      width: isPortrait ? frameWidth : frameWidth / 0.1,
+                      height: isPortrait ? frameHeight : frameHeight / 3,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
     );
   }
 
@@ -232,22 +254,17 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildIconButton(WeddingAssets.swap, 'Swap Photo', () {
-            _swapImages();
-          }),
-          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
-            _pickNewImage();
-          }),
+          _buildIconButton(WeddingAssets.swap, 'Swap Photo', _swapImages),
+          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', _pickNewImage),
           _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
             _openFramesBottomSheet(widget.categoryId);
           }),
-          _buildIconButton(WeddingAssets.export, 'Export', () {
-            _showExportDialog();
-          }),
+          _buildIconButton(WeddingAssets.export, 'Export', _showExportDialog),
         ],
       ),
     );
   }
+
   void _swapImages() {
     setState(() {
       String temp = _selectedImagePath1;
@@ -299,7 +316,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: frames.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
+                  ?  Center(child: CircularProgressIndicator(color: WeddingColors.mainColor,))
                   : GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,

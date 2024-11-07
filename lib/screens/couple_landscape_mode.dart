@@ -50,11 +50,29 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
 
   final ImagePicker _picker = ImagePicker();
 
+  // Add a loading state for the frame image
+  bool _isFrameLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _selectedImagePath1 = widget.imagePath1;
     _selectedImagePath2 = widget.imagePath2;
+    // _loadFrame();
+  }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadFrame();
+  }
+
+
+  // Method to load the frame and set the loading state
+  Future<void> _loadFrame() async {
+    await precacheImage(NetworkImage(widget.frame.frameImage), context);
+    setState(() {
+      _isFrameLoaded = true;
+    });
   }
 
   void _selectImage(int index) {
@@ -103,69 +121,76 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
         ],
       ),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              RepaintBoundary(
-                key: _captureKey,
-                child: SizedBox(
-                  height: frameHeight,
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        width: frameWidth,
-                        height: frameHeight,
-                        child: ClipRect(
-                          child: _buildImageWithFrame(
-                            _selectedImagePath1,
-                            _rotationAngle1,
-                            _imageOffset1,
-                            0,
-                            frameHeight/2,
-                            frameWidth /2,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        width: frameWidth,
-                        height: frameHeight,
-                        child: ClipRect(
-                          child: _buildImageWithFrame(
-                            _selectedImagePath2,
-                            _rotationAngle2,
-                            _imageOffset2,
-                            1,
-                            frameHeight/2,
-                            frameWidth/2,
-                          ),
-                        ),
-                      ),
-                      IgnorePointer(
-                        child: Image.network(
-                          widget.frame.frameImage,
-                          width: isPortrait ? screenWidth : screenWidth /0.5,
-                          height: frameHeight,
-
-                          fit: isPortrait ? BoxFit.cover : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
+        child: _isFrameLoaded
+            ? _buildContent(screenWidth, frameWidth, frameHeight, isPortrait)
+            :  CircularProgressIndicator(
+          color: WeddingColors.mainColor,
+        ), // Show loader until frame is ready
       ),
       bottomSheet: _buildStaticBottomSheet(),
+    );
+  }
+
+  Widget _buildContent(double screenWidth, double frameWidth, double frameHeight, bool isPortrait) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          RepaintBoundary(
+            key: _captureKey,
+            child: SizedBox(
+              height: frameHeight,
+              width: screenWidth,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    width: frameWidth,
+                    height: frameHeight,
+                    child: ClipRect(
+                      child: _buildImageWithFrame(
+                        _selectedImagePath1,
+                        _rotationAngle1,
+                        _imageOffset1,
+                        0,
+                        frameHeight / 2,
+                        frameWidth / 2,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    width: frameWidth,
+                    height: frameHeight,
+                    child: ClipRect(
+                      child: _buildImageWithFrame(
+                        _selectedImagePath2,
+                        _rotationAngle2,
+                        _imageOffset2,
+                        1,
+                        frameHeight / 2,
+                        frameWidth / 2,
+                      ),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Image.network(
+                      widget.frame.frameImage,
+                      width: isPortrait ? screenWidth : screenWidth / 0.5,
+                      height: frameHeight,
+                      fit: isPortrait ? BoxFit.cover : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
     );
   }
 
@@ -192,9 +217,11 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
           });
         }
       },
-      child: SizedBox(
-        height: frameHeight /2 ,
-        width: frameWidth/2,
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(),
+        height: frameHeight,
+        width: frameWidth,
         child: Transform.translate(
           offset: index == 0 ? _imageOffset1 : _imageOffset2,
           child: Transform.rotate(
@@ -202,7 +229,7 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
             child: PhotoView.customChild(
               backgroundDecoration: const BoxDecoration(color: Colors.transparent),
               customSize: Size(frameWidth, frameHeight),
-              minScale: PhotoViewComputedScale.contained,
+              minScale: PhotoViewComputedScale.contained * 0.5,
               maxScale: PhotoViewComputedScale.covered * 2,
               basePosition: Alignment.center,
               child: Image.file(
@@ -236,18 +263,12 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildIconButton(WeddingAssets.swap, 'Swap Photo', () {
-            _swapImages();
-          }),
-          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
-            _pickNewImage();
-          }),
+          _buildIconButton(WeddingAssets.swap, 'Swap Photo', _swapImages),
+          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', _pickNewImage),
           _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
             _openFramesBottomSheet(widget.categoryId);
           }),
-          _buildIconButton(WeddingAssets.export, 'Export', () {
-            _showExportDialog();
-          }),
+          _buildIconButton(WeddingAssets.export, 'Export', _showExportDialog),
         ],
       ),
     );
@@ -260,6 +281,19 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       _selectedImagePath2 = temp;
     });
   }
+
+  // Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.center,
+  //     children: [
+  //       IconButton(
+  //         icon: Image.asset(asset, height: 24, width: 24),
+  //         onPressed: onPressed,
+  //       ),
+  //       Text(label, style: TextStyle(color: WeddingColors.mainColor, fontSize: 12)),
+  //     ],
+  //   );
+  // }
 
 
 
