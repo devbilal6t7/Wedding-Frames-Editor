@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
           backgroundColor: Colors.black,
           splashIconSize: screenHeight,
           pageTransitionType: PageTransitionType.bottomToTop,
-          duration: 30000,
+          duration: 3000,
           splash: Image.asset(
             'assets/images/splash.png',
             fit: BoxFit.cover,
