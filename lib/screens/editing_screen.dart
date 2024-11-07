@@ -41,16 +41,29 @@ class _EditingScreenState extends State<EditingScreen> {
   Offset _initialFocalPoint = Offset.zero;
   Offset _startOffset = Offset.zero;
 
+  bool _isFrameLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _selectedImagePath = widget.imagePath;
   }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadFrame();
+  }
+
+  Future<void> _loadFrame() async {
+    await precacheImage(NetworkImage(widget.frame.frameImage), context);
+    setState(() {
+      _isFrameLoaded = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final double frameHeight =
-        MediaQuery.of(context).size.height * 0.56; // 60% of screen height
+    final double frameHeight = MediaQuery.of(context).size.height * 0.56;
     const double frameWidth = 355.0;
 
     return Scaffold(
@@ -67,67 +80,74 @@ class _EditingScreenState extends State<EditingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RepaintBoundary(
-                key: _captureKey,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: frameHeight,
-                      width: frameWidth,
-                      decoration: const BoxDecoration(),
-                      clipBehavior: Clip.hardEdge,
-                      child: GestureDetector(
-                        onScaleStart: (details) {
-                          _initialFocalPoint = details.focalPoint;
-                          _startOffset = _imageOffset;
-                        },
-                        onScaleUpdate: (details) {
-                          setState(() {
-                            const rotationDampingFactor = 0.009;
-                            // Update rotation angle
-                            _rotationAngle +=
-                                details.rotation * rotationDampingFactor;
-                            // Calculate movement offset
-                            final Offset offsetDelta =
-                                details.focalPoint - _initialFocalPoint;
-                            _imageOffset = _startOffset + offsetDelta;
-                          });
-                        },
-                        child: Transform.translate(
-                          offset: _imageOffset,
-                          child: Transform.rotate(
-                            angle: _rotationAngle,
-                            child: PhotoView(
-                              backgroundDecoration: const BoxDecoration(
-                                color: Colors.transparent,
-                              ),
-                              imageProvider:
-                                  FileImage(File(_selectedImagePath!)),
-                              minScale: PhotoViewComputedScale.contained * 0.4,
-                              maxScale: PhotoViewComputedScale.covered * 2,
-                              basePosition: Alignment.center,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    IgnorePointer(
-                      child: Image.network(
-                        widget.frame.frameImage,
-                        width: frameWidth,
-                        fit: BoxFit.fitHeight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _isFrameLoaded ? _buildFrameContent(frameWidth, frameHeight) : _buildLoadingIndicator(),
               const SizedBox(height: 30),
             ],
           ),
         ),
       ),
       bottomSheet: _buildStaticBottomSheet(),
+    );
+  }
+
+  Widget _buildFrameContent(double frameWidth, double frameHeight) {
+    return RepaintBoundary(
+      key: _captureKey,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: frameHeight,
+            width: frameWidth,
+            decoration: const BoxDecoration(),
+            clipBehavior: Clip.hardEdge,
+            child: GestureDetector(
+              onScaleStart: (details) {
+                _initialFocalPoint = details.focalPoint;
+                _startOffset = _imageOffset;
+              },
+              onScaleUpdate: (details) {
+                setState(() {
+                  const rotationDampingFactor = 0.009;
+                  // Update rotation angle
+                  _rotationAngle += details.rotation * rotationDampingFactor;
+                  // Calculate movement offset
+                  final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
+                  _imageOffset = _startOffset + offsetDelta;
+                });
+              },
+              child: Transform.translate(
+                offset: _imageOffset,
+                child: Transform.rotate(
+                  angle: _rotationAngle,
+                  child: PhotoView(
+                    backgroundDecoration: const BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    imageProvider: FileImage(File(_selectedImagePath!)),
+                    minScale: PhotoViewComputedScale.contained * 0.4,
+                    maxScale: PhotoViewComputedScale.covered * 2,
+                    basePosition: Alignment.center,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          IgnorePointer(
+            child: Image.network(
+              widget.frame.frameImage,
+              width: frameWidth,
+              fit: BoxFit.fitHeight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: CircularProgressIndicator(color: WeddingColors.mainColor),
     );
   }
 
@@ -147,16 +167,16 @@ class _EditingScreenState extends State<EditingScreen> {
         children: [
           _buildIconButton(WeddingAssets.editImage,
               AppLocalizations.of(context).translate('editPhoto'), () {
-            _pickNewImage();
-          }),
+                _pickNewImage();
+              }),
           _buildIconButton(WeddingAssets.editFrame,
               AppLocalizations.of(context).translate('editFrame'), () {
-            _openFramesBottomSheet(widget.categoryId);
-          }),
+                _openFramesBottomSheet(widget.categoryId);
+              }),
           _buildIconButton(WeddingAssets.export,
               AppLocalizations.of(context).translate('export'), () {
-            _showExportDialog();
-          }),
+                _showExportDialog();
+              }),
         ],
       ),
     );
@@ -190,7 +210,7 @@ class _EditingScreenState extends State<EditingScreen> {
               decoration: BoxDecoration(
                 color: WeddingColors.mainColor,
               ),
-              child:  Center(
+              child: Center(
                 child: Text(
                   AppLocalizations.of(context).translate('allFrames'),
                   style: const TextStyle(
@@ -206,54 +226,51 @@ class _EditingScreenState extends State<EditingScreen> {
               child: frames.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 0.7,
-                      ),
-                      itemCount: frames.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final frame = frames[index];
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              widget.frame = widget.frame
-                                  .copyWith(frameImage: frame.frameImage);
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 20),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.grey.shade300, width: 1.5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    spreadRadius: 2,
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  frame.frameImage,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 0.7,
+                ),
+                itemCount: frames.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final frame = frames[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
+                        _loadFrame(); // Reload the new frame image
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
                             ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            frame.frameImage,
+                            fit: BoxFit.cover,
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
+                  );
+                },
+              ),
             ),
           ],
         );
@@ -310,7 +327,7 @@ class _EditingScreenState extends State<EditingScreen> {
               _buildDialogButton(
                 AppLocalizations.of(context).translate('downloadSaved'),
                 WeddingAssets.download,
-                () {
+                    () {
                   _saveImage();
                   Navigator.pop(context);
                 },
@@ -319,7 +336,7 @@ class _EditingScreenState extends State<EditingScreen> {
               _buildDialogButton(
                 AppLocalizations.of(context).translate('shareWithFriends'),
                 WeddingAssets.share,
-                () {
+                    () {
                   _shareImage();
                   Navigator.pop(context);
                 },
@@ -369,8 +386,7 @@ class _EditingScreenState extends State<EditingScreen> {
             final path = '${directory?.path}/wedding_frames';
             await Directory(path).create(recursive: true);
 
-            final filePath =
-                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
             final file = File(filePath);
             await file.writeAsBytes(imageData);
           }
@@ -378,7 +394,7 @@ class _EditingScreenState extends State<EditingScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(AppLocalizations.of(context).translate('snackBarErrorSaving'))),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('snackBarErrorSaving'))),
       );
     }
   }
@@ -396,19 +412,18 @@ class _EditingScreenState extends State<EditingScreen> {
         final file = await File('${tempDir.path}/wedding_frame.png').create();
         await file.writeAsBytes(imageData);
         await Share.shareXFiles([XFile(file.path)],
-            text:  AppLocalizations.of(context).translate('checkOut'),);
+            text: AppLocalizations.of(context).translate('checkOut'));
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text( AppLocalizations.of(context).translate('snackBarErrorSharing'))),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('snackBarErrorSharing'))),
       );
     }
   }
 
   Future<Uint8List?> _capturePng() async {
     try {
-      RenderRepaintBoundary boundary = _captureKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       var image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
