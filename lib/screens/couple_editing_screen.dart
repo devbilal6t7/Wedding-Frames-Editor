@@ -97,7 +97,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
     const double frameWidth = 355.0;
-    const double toolbarHeight = 80.0;
+    const double toolbarHeight = 050.0;
     bool isPortrait = widget.type.contains('p');
 
     final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30);
@@ -119,10 +119,17 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: _isFrameLoaded
-            ? _buildContent(frameWidth, frameHeight, isPortrait) // Display content when frame is loaded
-            :  Center(child: CircularProgressIndicator(color: WeddingColors.mainColor,)), // Show loader until frame is loaded
+      body: Column(
+        children: [
+          
+          Expanded(
+            child: Center(
+              child: _isFrameLoaded
+                  ? _buildContent(frameWidth, frameHeight, isPortrait) // Display content when frame is loaded
+                  :  Center(child: CircularProgressIndicator(color: WeddingColors.mainColor,)), // Show loader until frame is loaded
+            ),
+          ),
+        ],
       ),
       bottomSheet: _buildStaticBottomSheet(),
     );
@@ -244,7 +251,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   Widget _buildStaticBottomSheet() {
     return Container(
-      height: 80,
+      height: 70,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: WeddingColors.mainColor, width: 1.5),
