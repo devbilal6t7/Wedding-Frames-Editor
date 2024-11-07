@@ -29,5 +29,6 @@
   "snackBar2Images": "يرجى اختيار صورتين بالضبط.",
   "chooseFromGallery": "اختر من المعرض",
   "takeWithCamera": "التقط بواسطة الكاميرا",
-  "deletedImage": "تم حذف الصورة بنجاح."
+  "deletedImage": "تم حذف الصورة بنجاح.",
+  "swap": "تبديل الصورة"
 }

@@ -15,6 +15,7 @@ import '../providers/frames_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../widgets/app_localizations.dart';
 import 'couple_landscape_mode.dart';
 
 class CoupleEditingScreen extends StatefulWidget {
@@ -104,7 +105,8 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
+        title:  Text( AppLocalizations.of(context)
+            .translate('appBarHome'), style: const TextStyle(fontSize: 18)),
         backgroundColor: WeddingColors.mainColor,
         actions: [
           IconButton(
@@ -254,12 +256,19 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildIconButton(WeddingAssets.swap, 'Swap Photo', _swapImages),
-          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', _pickNewImage),
-          _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
-            _openFramesBottomSheet(widget.categoryId);
-          }),
-          _buildIconButton(WeddingAssets.export, 'Export', _showExportDialog),
+          _buildIconButton(WeddingAssets.swap, AppLocalizations.of(context).translate('swap'), _swapImages),
+          _buildIconButton(WeddingAssets.editImage,
+              AppLocalizations.of(context).translate('editPhoto'), () {
+                _pickNewImage();
+              }),
+          _buildIconButton(WeddingAssets.editFrame,
+              AppLocalizations.of(context).translate('editFrame'), () {
+                _openFramesBottomSheet(widget.categoryId);
+              }),
+          _buildIconButton(WeddingAssets.export,
+              AppLocalizations.of(context).translate('export'), () {
+                _showExportDialog();
+              }),
         ],
       ),
     );
@@ -302,10 +311,10 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
               decoration: BoxDecoration(
                 color: WeddingColors.mainColor,
               ),
-              child: const Center(
+              child:  Center(
                 child: Text(
-                  "All Frames",
-                  style: TextStyle(
+                  AppLocalizations.of(context).translate('allFrames'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -422,10 +431,11 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
             children: [
               Image.asset(WeddingAssets.export, height: 30, width: 30),
               const SizedBox(height: 10),
-              const Text('Select an Option', style: TextStyle(fontSize: 18)),
+              Text(AppLocalizations.of(context).translate('selectOption'),
+                  style: TextStyle(fontSize: 18)),
               const SizedBox(height: 20),
               _buildDialogButton(
-                'Download/Save',
+                AppLocalizations.of(context).translate('downloadSaved'),
                 WeddingAssets.download,
                     () {
                   _saveImage();
@@ -434,7 +444,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
-                'Share With Friends',
+                AppLocalizations.of(context).translate('shareWithFriends'),
                 WeddingAssets.share,
                     () {
                   _shareImage();
@@ -475,7 +485,11 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
           if (result["isSuccess"] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image saved to gallery')),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).translate('snackBarImageSaver'),
+                ),
+              ),
             );
 
             final directory = await getExternalStorageDirectory();
@@ -490,7 +504,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Saving Image! Try Again')),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('snackBarErrorSaving'))),
       );
     }
   }
@@ -511,7 +525,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Sharing Image! Try Again')),
+        SnackBar(content: Text( AppLocalizations.of(context).translate('snackBarErrorSharing'))),
       );
     }
   }

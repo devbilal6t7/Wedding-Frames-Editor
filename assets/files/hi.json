@@ -29,5 +29,6 @@
   "snackBar2Images": "कृपया ठीक 2 चित्र चुनें।",
   "chooseFromGallery": "गैलरी से चुनें",
   "takeWithCamera": "कैमरे से लें",
-  "deletedImage": "चित्र सफलतापूर्वक हटाया गया।"
+  "deletedImage": "चित्र सफलतापूर्वक हटाया गया।",
+  "swap": "फोटो स्वैप करें"
 }

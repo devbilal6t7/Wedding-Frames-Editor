@@ -29,5 +29,6 @@
   "snackBar2Images": "Por favor, seleccione exactamente 2 imágenes.",
   "chooseFromGallery": "Elegir de la galería",
   "takeWithCamera": "Tomar con la cámara",
-  "deletedImage": "Imagen eliminada con éxito."
+  "deletedImage": "Imagen eliminada con éxito.",
+  "swap": "Intercambiar foto"
 }

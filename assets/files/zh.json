@@ -29,5 +29,6 @@
   "snackBar2Images": "请选择恰好两张图片。",
   "chooseFromGallery": "从相册选择",
   "takeWithCamera": "用相机拍摄",
-  "deletedImage": "图片已成功删除。"
+  "deletedImage": "图片已成功删除。",
+  "swap": "交换照片"
 }

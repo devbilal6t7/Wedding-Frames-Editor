@@ -173,7 +173,7 @@ class _SavedScreenState extends State<SavedScreen> {
           _images.remove(image);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image deleted successfully.')),
+           SnackBar(content: Text(AppLocalizations.of(context).translate('deletedImage'),)),
         );
       }
     } catch (e) {
