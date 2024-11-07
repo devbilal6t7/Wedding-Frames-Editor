@@ -16,6 +16,8 @@ import '../providers/frames_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../widgets/app_localizations.dart';
+
 class CoupleLandscape extends StatefulWidget {
   FrameModel frame;
   final String imagePath1;
@@ -50,7 +52,6 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // Add a loading state for the frame image
   bool _isFrameLoaded = false;
 
   @override
@@ -58,16 +59,14 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
     super.initState();
     _selectedImagePath1 = widget.imagePath1;
     _selectedImagePath2 = widget.imagePath2;
-    // _loadFrame();
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadFrame();
   }
 
-
-  // Method to load the frame and set the loading state
   Future<void> _loadFrame() async {
     await precacheImage(NetworkImage(widget.frame.frameImage), context);
     setState(() {
@@ -98,16 +97,19 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
-    const double toolbarHeight = 80.0;
     bool isPortrait = widget.type.contains('p');
 
     final double frameWidth = isPortrait ? screenWidth : screenWidth / 2;
-    final double frameHeight = screenHeight - (toolbarHeight + kToolbarHeight + 30);
+    final double frameHeight = screenHeight - (500 + 70);
 
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text('Wedding Frames Editor', style: TextStyle(fontSize: 18)),
+        title: Text(
+         AppLocalizations.of(context)
+        .translate('appBarHome'),
+          style: const TextStyle(fontSize: 15.5),
+        ),
         backgroundColor: WeddingColors.mainColor,
         actions: [
           IconButton(
@@ -123,9 +125,9 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       body: Center(
         child: _isFrameLoaded
             ? _buildContent(screenWidth, frameWidth, frameHeight, isPortrait)
-            :  CircularProgressIndicator(
+            : CircularProgressIndicator(
           color: WeddingColors.mainColor,
-        ), // Show loader until frame is ready
+        ),
       ),
       bottomSheet: _buildStaticBottomSheet(),
     );
@@ -155,7 +157,7 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
                         _rotationAngle1,
                         _imageOffset1,
                         0,
-                        frameHeight / 2,
+                        frameHeight + 100,
                         frameWidth / 2,
                       ),
                     ),
@@ -171,7 +173,7 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
                         _rotationAngle2,
                         _imageOffset2,
                         1,
-                        frameHeight / 2,
+                        frameHeight + 100,
                         frameWidth / 2,
                       ),
                     ),
@@ -219,8 +221,8 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       },
       child: Container(
         clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(),
-        height: frameHeight,
+        decoration: const BoxDecoration(),
+        height: frameHeight / 2,
         width: frameWidth,
         child: Transform.translate(
           offset: index == 0 ? _imageOffset1 : _imageOffset2,
@@ -230,11 +232,11 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
               backgroundDecoration: const BoxDecoration(color: Colors.transparent),
               customSize: Size(frameWidth, frameHeight),
               minScale: PhotoViewComputedScale.contained * 0.5,
-              maxScale: PhotoViewComputedScale.covered * 2,
+              maxScale: PhotoViewComputedScale.covered * 8,
               basePosition: Alignment.center,
               child: Image.file(
                 File(imagePath),
-                height: frameHeight / 5,
+                height: frameHeight / 7,
               ),
             ),
           ),
@@ -263,12 +265,12 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildIconButton(WeddingAssets.swap, 'Swap Photo', _swapImages),
-          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', _pickNewImage),
-          _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
+          _buildIconButton(WeddingAssets.swap, AppLocalizations.of(context).translate('swap'), _swapImages),
+          _buildIconButton(WeddingAssets.editImage, AppLocalizations.of(context).translate('editPhoto'), _pickNewImage),
+          _buildIconButton(WeddingAssets.editFrame, AppLocalizations.of(context).translate('editFrame'), () {
             _openFramesBottomSheet(widget.categoryId);
           }),
-          _buildIconButton(WeddingAssets.export, 'Export', _showExportDialog),
+          _buildIconButton(WeddingAssets.export, AppLocalizations.of(context).translate('export'), _showExportDialog),
         ],
       ),
     );
@@ -281,22 +283,6 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       _selectedImagePath2 = temp;
     });
   }
-
-  // Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
-  //   return Column(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       IconButton(
-  //         icon: Image.asset(asset, height: 24, width: 24),
-  //         onPressed: onPressed,
-  //       ),
-  //       Text(label, style: TextStyle(color: WeddingColors.mainColor, fontSize: 12)),
-  //     ],
-  //   );
-  // }
-
-
-
 
   void _openFramesBottomSheet(String categoryId) async {
     final framesProvider = Provider.of<FramesProvider>(context, listen: false);
@@ -326,10 +312,10 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
               decoration: BoxDecoration(
                 color: WeddingColors.mainColor,
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  "All Frames",
-                  style: TextStyle(
+                  AppLocalizations.of(context).translate('allFrames'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -340,7 +326,7 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
             const SizedBox(height: 20),
             Expanded(
               child: frames.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(color: WeddingColors.mainColor))
                   : GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -353,18 +339,13 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
                   final frame = frames[index];
                   return GestureDetector(
                     onTap: () {
-                      // Close the bottom sheet
                       Navigator.pop(context);
-
-                      // Use a post-frame callback to perform navigation or state updates
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (!frame.type.contains("p")) {
-                          // For landscape frames, update the frame without navigation
                           setState(() {
                             widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
                           });
                         } else {
-                          // For portrait frames, navigate to the new screen
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) => CoupleEditingScreen(
@@ -414,8 +395,6 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
     );
   }
 
-
-
   Widget _buildIconButton(String asset, String label, VoidCallback onPressed) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -448,10 +427,13 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
             children: [
               Image.asset(WeddingAssets.export, height: 30, width: 30),
               const SizedBox(height: 10),
-              const Text('Select an Option', style: TextStyle(fontSize: 18)),
+              Text(
+                AppLocalizations.of(context).translate('selectOption'),
+                style: const TextStyle(fontSize: 18),
+              ),
               const SizedBox(height: 20),
               _buildDialogButton(
-                'Download/Save',
+                AppLocalizations.of(context).translate('downloadSaved'),
                 WeddingAssets.download,
                     () {
                   _saveImage();
@@ -460,7 +442,7 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
-                'Share With Friends',
+                AppLocalizations.of(context).translate('shareWithFriends'),
                 WeddingAssets.share,
                     () {
                   _shareImage();
@@ -501,7 +483,11 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
 
           if (result["isSuccess"] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image saved to gallery')),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).translate('snackBarImageSaver'),
+                ),
+              ),
             );
 
             final directory = await getExternalStorageDirectory();
@@ -516,7 +502,9 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Saving Image! Try Again')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).translate('snackBarErrorSaving')),
+        ),
       );
     }
   }
@@ -537,7 +525,9 @@ class _CoupleLandscapeState extends State<CoupleLandscape> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Sharing Image! Try Again')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).translate('snackBarErrorSharing')),
+        ),
       );
     }
   }

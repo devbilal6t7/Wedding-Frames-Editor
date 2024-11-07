@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wedding_frames_editor/providers/frame_category_provider.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
-import 'package:wedding_frames_editor/screens/home_screen.dart';
 import 'package:wedding_frames_editor/screens/language_screen.dart';
+import 'package:wedding_frames_editor/screens/splash_screen.dart';
 import 'package:wedding_frames_editor/widgets/app_localizations.dart';
 
 void main() {
@@ -73,7 +73,7 @@ class _MyAppState extends State<MyApp> {
         supportedLocales: const [
           Locale('ar'),  Locale('zh'), Locale('en'), Locale('es'), Locale('hi'), Locale('ur')
         ],
-        home: _isLanguageSelected ? const HomeScreen() : const LanguageSelectionScreen(),
+        home: _isLanguageSelected ? const SplashScreen() : const LanguageSelectionScreen(),
       ),
     );
   }
