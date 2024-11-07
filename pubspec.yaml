@@ -44,6 +44,10 @@ dependencies:
   image_gallery_saver_plus: ^3.0.5
   permission_handler: ^11.3.1
   cached_network_image: ^3.4.1
+  shared_preferences: ^2.3.2
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +75,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/files/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

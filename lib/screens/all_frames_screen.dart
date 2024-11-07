@@ -7,22 +7,23 @@ import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
 import 'package:wedding_frames_editor/screens/couple_landscape_mode.dart';
 import '../consts/app_colors.dart';
+import '../widgets/app_localizations.dart';
 import 'couple_editing_screen.dart';
 import 'editing_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class DetailScreen extends StatefulWidget {
+class AllFramesScreen extends StatefulWidget {
   final String categoryId;
   final String title;
 
-  const DetailScreen(
+  const AllFramesScreen(
       {super.key, required this.categoryId, required this.title});
 
   @override
-  State<DetailScreen> createState() => _DetailScreenState();
+  State<AllFramesScreen> createState() => _AllFramesScreenState();
 }
 
-class _DetailScreenState extends State<DetailScreen> {
+class _AllFramesScreenState extends State<AllFramesScreen> {
   void _showImagePickerOptions(BuildContext context, FrameModel frame) {
     final parentContext = context;
     showModalBottomSheet(
@@ -42,7 +43,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: const Text("Choose From Gallery"),
+                title: Text( AppLocalizations.of(context).translate('chooseFromGallery'),),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(parentContext, ImageSource.gallery, frame,
@@ -55,7 +56,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: const Text("Take With Camera"),
+                title: Text( AppLocalizations.of(context).translate('takeWithCamera'),),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(parentContext, ImageSource.camera, frame,
@@ -105,8 +106,8 @@ class _DetailScreenState extends State<DetailScreen> {
           );
         } else if (images.length != 2) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please select exactly 2 images.'),
+             SnackBar(
+              content: Text( AppLocalizations.of(context).translate('snackBar2Images'),),
               backgroundColor: Colors.red,
             ),
           );
@@ -131,15 +132,39 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  Widget _getAppBarTitle() {
+    if (widget.categoryId == "1") {
+      return Text(
+        AppLocalizations.of(context).translate('coupleFrames'),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    } else if (widget.categoryId == "2") {
+      return Text(
+        AppLocalizations.of(context).translate('weddingSolo'),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+        ),
+      );
+    } else {
+      return Text(
+        AppLocalizations.of(context).translate('anniversaryFrames'),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+        ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: Text(
-          widget.title,
-          style: const TextStyle(fontSize: 18),
-        ),
+        title:  _getAppBarTitle(),
         backgroundColor: WeddingColors.mainColor,
       ),
       body: FutureBuilder(
@@ -151,7 +176,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 child:
                     CircularProgressIndicator(color: WeddingColors.mainColor));
           } else if (snapshot.hasError) {
-            return const Center(child: Text("Error loading frames"));
+            return Center(child: Text( AppLocalizations.of(context).translate('errorLoading'),));
           } else {
             final frames = Provider.of<FramesProvider>(context)
                 .getFrames(widget.categoryId);

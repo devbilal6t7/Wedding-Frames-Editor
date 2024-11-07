@@ -9,6 +9,7 @@ import 'package:wedding_frames_editor/screens/side_drawer.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
+import '../widgets/app_localizations.dart';
 import 'all_frames_screen.dart';
 import 'couple_editing_screen.dart';
 import 'couple_landscape_mode.dart';
@@ -36,9 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text(
-          'Wedding Frames Editor',
-          style: TextStyle(fontSize: 18),
+        title:  Text(
+          AppLocalizations.of(context)
+              .translate('appBarHome'),
+          style: const TextStyle(fontSize: 18),
         ),
         backgroundColor: WeddingColors.mainColor,
         leading: IconButton(
@@ -66,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
             } else if (snapshot.hasError) {
               return  RefreshIndicator(
                 onRefresh: _refreshCategories,
-                child: const Center(
-                  child: Text("Check Your Internet Connection"),
+                child:  Center(
+                  child: Text( AppLocalizations.of(context).translate('checkInternet'),),
                 ),
               );
             } else {
@@ -138,13 +140,30 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            if (categoryId == "1")
+              Text(
+                AppLocalizations.of(context).translate('coupleFrames'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            else if(categoryId == "2")
+              Text(
+                AppLocalizations.of(context).translate('weddingSolo'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal,
+                ),
+              )
+            else
+              Text(
+                AppLocalizations.of(context).translate('anniversaryFrames'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal,
+                ),
               ),
-            ),
             const SizedBox(height: 20),
             FutureBuilder(
               future: Provider.of<FramesProvider>(context, listen: false)
@@ -153,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return _buildFramesShimmer();
                 } else if (snapshot.hasError) {
-                  return const Text("Error loading frames");
+                  return  Text( AppLocalizations.of(context).translate('errorLoading'),);
                 } else {
                   final frames = Provider.of<FramesProvider>(context)
                       .getFrames(categoryId);
@@ -169,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DetailScreen(
+                      builder: (context) => AllFramesScreen(
                         categoryId: categoryId,
                         title: title,
                       ),
@@ -177,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 child: Text(
-                  "View all",
+                  AppLocalizations.of(context).translate('viewAll'),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.black.withOpacity(0.5),
@@ -190,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 
   Widget _buildFramesShimmer() {
     return SingleChildScrollView(
@@ -258,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: const Text("Choose From Gallery"),
+                title:  Text( AppLocalizations.of(context).translate('chooseFromGallery'),),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
@@ -271,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: const Text("Take With Camera"),
+                title:  Text( AppLocalizations.of(context).translate('takeWithCamera'),),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
@@ -321,8 +341,8 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       } else if (images.length != 2) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select exactly 2 images.'),
+           SnackBar(
+            content: Text( AppLocalizations.of(context).translate('snackBar2Images'),),
             backgroundColor: Colors.red,
           ),
         );

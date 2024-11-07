@@ -16,6 +16,7 @@ class WeddingAssets{
   static String delete = "assets/icons/delete.png";
   static String expand = "assets/icons/expand.png";
   static String swap = "assets/icons/swap.png";
+  static String language = "assets/icons/language.png";
 
   // images
   static String splash = "assets/backgrounds/splash.png";

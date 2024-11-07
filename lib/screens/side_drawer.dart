@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wedding_frames_editor/screens/language_screen.dart';
 import 'package:wedding_frames_editor/screens/saved_screen.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
+import '../widgets/app_localizations.dart';
 
 class SideDrawer extends StatefulWidget {
   const SideDrawer({super.key});
@@ -39,7 +41,7 @@ class _SideDrawerState extends State<SideDrawer> {
               height: 20,
               width: 20,
             ),
-            title: const Text('Download / Saved'),
+            title:  Text(   AppLocalizations.of(context).translate('downloadSaved'),),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -54,7 +56,7 @@ class _SideDrawerState extends State<SideDrawer> {
               height: 20,
               width: 20,
             ),
-            title: const Text('Share App'),
+            title:   Text(   AppLocalizations.of(context).translate('shareApp'),),
             onTap: shareApp,
           ),
           ListTile(
@@ -66,14 +68,14 @@ class _SideDrawerState extends State<SideDrawer> {
             title: RichText(
               text: TextSpan(
                 children: [
-                  const TextSpan(
-                    text: 'App Version ',
-                    style: TextStyle(
+                   TextSpan(
+                    text: AppLocalizations.of(context).translate('appVersion'),
+                    style: const TextStyle(
                       color: Colors.black,
                     ),
                   ),
                   TextSpan(
-                    text: '(1.0.0)',
+                    text: '  (1.0.0)',
                     style: TextStyle(
                         color: WeddingColors.mainColor,
                         fontWeight: FontWeight.bold,
@@ -82,6 +84,21 @@ class _SideDrawerState extends State<SideDrawer> {
                 ],
               ),
             ),
+          ),
+          ListTile(
+            leading: Image.asset(
+              WeddingAssets.language,
+              height: 20,
+              width: 20,
+            ),
+            title: Text(   AppLocalizations.of(context).translate('language'),),
+            onTap: (){
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LanguageSelectionScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),

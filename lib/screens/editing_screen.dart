@@ -14,6 +14,7 @@ import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/frames_provider.dart';
+import '../widgets/app_localizations.dart';
 
 class EditingScreen extends StatefulWidget {
   FrameModel frame;
@@ -48,15 +49,16 @@ class _EditingScreenState extends State<EditingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double frameHeight = MediaQuery.of(context).size.height * 0.56; // 60% of screen height
+    final double frameHeight =
+        MediaQuery.of(context).size.height * 0.56; // 60% of screen height
     const double frameWidth = 355.0;
 
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text(
-          'Wedding Frames Editor',
-          style: TextStyle(fontSize: 18),
+        title: Text(
+          AppLocalizations.of(context).translate('appBarHome'),
+          style: const TextStyle(fontSize: 18),
         ),
         backgroundColor: WeddingColors.mainColor,
       ),
@@ -84,9 +86,11 @@ class _EditingScreenState extends State<EditingScreen> {
                           setState(() {
                             const rotationDampingFactor = 0.009;
                             // Update rotation angle
-                            _rotationAngle += details.rotation * rotationDampingFactor;
+                            _rotationAngle +=
+                                details.rotation * rotationDampingFactor;
                             // Calculate movement offset
-                            final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
+                            final Offset offsetDelta =
+                                details.focalPoint - _initialFocalPoint;
                             _imageOffset = _startOffset + offsetDelta;
                           });
                         },
@@ -98,7 +102,8 @@ class _EditingScreenState extends State<EditingScreen> {
                               backgroundDecoration: const BoxDecoration(
                                 color: Colors.transparent,
                               ),
-                              imageProvider: FileImage(File(_selectedImagePath!)),
+                              imageProvider:
+                                  FileImage(File(_selectedImagePath!)),
                               minScale: PhotoViewComputedScale.contained * 0.4,
                               maxScale: PhotoViewComputedScale.covered * 2,
                               basePosition: Alignment.center,
@@ -140,13 +145,16 @@ class _EditingScreenState extends State<EditingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildIconButton(WeddingAssets.editImage, 'Edit Photo', () {
+          _buildIconButton(WeddingAssets.editImage,
+              AppLocalizations.of(context).translate('editPhoto'), () {
             _pickNewImage();
           }),
-          _buildIconButton(WeddingAssets.editFrame, 'Edit Frame', () {
+          _buildIconButton(WeddingAssets.editFrame,
+              AppLocalizations.of(context).translate('editFrame'), () {
             _openFramesBottomSheet(widget.categoryId);
           }),
-          _buildIconButton(WeddingAssets.export, 'Export', () {
+          _buildIconButton(WeddingAssets.export,
+              AppLocalizations.of(context).translate('export'), () {
             _showExportDialog();
           }),
         ],
@@ -182,10 +190,10 @@ class _EditingScreenState extends State<EditingScreen> {
               decoration: BoxDecoration(
                 color: WeddingColors.mainColor,
               ),
-              child: const Center(
+              child:  Center(
                 child: Text(
-                  "All Frames",
-                  style: TextStyle(
+                  AppLocalizations.of(context).translate('allFrames'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -198,50 +206,54 @@ class _EditingScreenState extends State<EditingScreen> {
               child: frames.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 0.7,
-                ),
-                itemCount: frames.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final frame = frames[index];
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        widget.frame = widget.frame.copyWith(frameImage: frame.frameImage);
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            frame.frameImage,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 0.7,
                       ),
+                      itemCount: frames.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final frame = frames[index];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              widget.frame = widget.frame
+                                  .copyWith(frameImage: frame.frameImage);
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 20),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.grey.shade300, width: 1.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  frame.frameImage,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         );
@@ -292,21 +304,22 @@ class _EditingScreenState extends State<EditingScreen> {
             children: [
               Image.asset(WeddingAssets.export, height: 30, width: 30),
               const SizedBox(height: 10),
-              const Text('Select an Option', style: TextStyle(fontSize: 18)),
+              Text(AppLocalizations.of(context).translate('selectOption'),
+                  style: TextStyle(fontSize: 18)),
               const SizedBox(height: 20),
               _buildDialogButton(
-                'Download/Save',
+                AppLocalizations.of(context).translate('downloadSaved'),
                 WeddingAssets.download,
-                    () {
+                () {
                   _saveImage();
                   Navigator.pop(context);
                 },
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
-                'Share With Friends',
+                AppLocalizations.of(context).translate('shareWithFriends'),
                 WeddingAssets.share,
-                    () {
+                () {
                   _shareImage();
                   Navigator.pop(context);
                 },
@@ -345,14 +358,19 @@ class _EditingScreenState extends State<EditingScreen> {
 
           if (result["isSuccess"] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image saved to gallery')),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).translate('snackBarImageSaver'),
+                ),
+              ),
             );
 
             final directory = await getExternalStorageDirectory();
             final path = '${directory?.path}/wedding_frames';
             await Directory(path).create(recursive: true);
 
-            final filePath = '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
+            final filePath =
+                '$path/wedding_frame_${DateTime.now().millisecondsSinceEpoch}.png';
             final file = File(filePath);
             await file.writeAsBytes(imageData);
           }
@@ -360,7 +378,7 @@ class _EditingScreenState extends State<EditingScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Saving Image! Try Again')),
+         SnackBar(content: Text(AppLocalizations.of(context).translate('snackBarErrorSaving'))),
       );
     }
   }
@@ -377,18 +395,20 @@ class _EditingScreenState extends State<EditingScreen> {
         final tempDir = await getTemporaryDirectory();
         final file = await File('${tempDir.path}/wedding_frame.png').create();
         await file.writeAsBytes(imageData);
-        await Share.shareXFiles([XFile(file.path)], text: 'Check out my wedding frame!');
+        await Share.shareXFiles([XFile(file.path)],
+            text:  AppLocalizations.of(context).translate('checkOut'),);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error Sharing Image! Try Again')),
+         SnackBar(content: Text( AppLocalizations.of(context).translate('snackBarErrorSharing'))),
       );
     }
   }
 
   Future<Uint8List?> _capturePng() async {
     try {
-      RenderRepaintBoundary boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = _captureKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
       var image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       return byteData?.buffer.asUint8List();

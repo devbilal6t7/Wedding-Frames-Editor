@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wedding_frames_editor/consts/app_colors.dart';
 import '../consts/assets.dart';
+import '../widgets/app_localizations.dart';
 
 class SavedScreen extends StatefulWidget {
   const SavedScreen({super.key});
@@ -46,13 +47,13 @@ class _SavedScreenState extends State<SavedScreen> {
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: WeddingColors.mainColor,
-        title: const Text(
-          "Downloads/Saved",
-          style: TextStyle(fontSize: 18),
+        title:  Text(
+          AppLocalizations.of(context).translate('downloadSaved'),
+          style: const TextStyle(fontSize: 18),
         ),
       ),
       body: _images.isEmpty
-          ? const Center(child: Text("No images saved yet."))
+          ?  Center(child: Text( AppLocalizations.of(context).translate('noImageSaved')))
           : Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
@@ -108,10 +109,10 @@ class _SavedScreenState extends State<SavedScreen> {
             children: [
               Image.asset(WeddingAssets.export, height: 30, width: 30),
               const SizedBox(height: 10),
-              const Text('Select an Option', style: TextStyle(fontSize: 18)),
+               Text(AppLocalizations.of(context).translate('selectOption'),),
               const SizedBox(height: 20),
               _buildDialogButton(
-                'Expand',
+                AppLocalizations.of(context).translate('expand'),
                 WeddingAssets.expand,
                 () {
                   Navigator.pop(context);
@@ -126,7 +127,7 @@ class _SavedScreenState extends State<SavedScreen> {
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
-                'Delete',
+                AppLocalizations.of(context).translate('delete'),
                 WeddingAssets.delete,
                 () {
                   Navigator.pop(context);
@@ -135,7 +136,7 @@ class _SavedScreenState extends State<SavedScreen> {
               ),
               const SizedBox(height: 10),
               _buildDialogButton(
-                'Share With Friends',
+                AppLocalizations.of(context).translate('shareWithFriends'),
                 WeddingAssets.share,
                 () {
                   Navigator.pop(context);
@@ -185,7 +186,7 @@ class _SavedScreenState extends State<SavedScreen> {
       final file = File(image.path);
       if (await file.exists()) {
         await Share.shareXFiles([XFile(file.path)],
-            text: 'Check out this wedding frame!');
+            text: AppLocalizations.of(context).translate('checkOut'),);
       }
     } catch (e) {
       print("Error sharing image: $e");
@@ -204,9 +205,9 @@ class ImagePreviewScreen extends StatelessWidget {
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: WeddingColors.mainColor,
-        title: const Text(
-          "Downloaded Image",
-          style: TextStyle(fontSize: 18),
+        title:  Text(
+            AppLocalizations.of(context).translate('downloadedImage'),
+          style: const TextStyle(fontSize: 18),
         ),
       ),
       backgroundColor: Colors.black,
