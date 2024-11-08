@@ -41,7 +41,9 @@ class _SideDrawerState extends State<SideDrawer> {
               height: 20,
               width: 20,
             ),
-            title:  Text(   AppLocalizations.of(context).translate('downloadSaved'),),
+            title: Text(
+              _translate(context, 'downloadSaved'),
+            ),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -56,7 +58,9 @@ class _SideDrawerState extends State<SideDrawer> {
               height: 20,
               width: 20,
             ),
-            title:   Text(   AppLocalizations.of(context).translate('shareApp'),),
+            title: Text(
+              _translate(context, 'shareApp'),
+            ),
             onTap: shareApp,
           ),
           ListTile(
@@ -68,8 +72,8 @@ class _SideDrawerState extends State<SideDrawer> {
             title: RichText(
               text: TextSpan(
                 children: [
-                   TextSpan(
-                    text: AppLocalizations.of(context).translate('appVersion'),
+                  TextSpan(
+                    text: _translate(context, 'appVersion'),
                     style: const TextStyle(
                       color: Colors.black,
                     ),
@@ -77,8 +81,8 @@ class _SideDrawerState extends State<SideDrawer> {
                   TextSpan(
                     text: '  (1.0.0)',
                     style: TextStyle(
-                        color: WeddingColors.mainColor,
-                        fontWeight: FontWeight.bold,
+                      color: WeddingColors.mainColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -91,9 +95,11 @@ class _SideDrawerState extends State<SideDrawer> {
               height: 20,
               width: 20,
             ),
-            title: Text(   AppLocalizations.of(context).translate('language'),),
-            onTap: (){
-              Navigator.of(context).push(
+            title: Text(
+              _translate(context, 'language'),
+            ),
+            onTap: () {
+              Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (context) => const LanguageSelectionScreen(),
                 ),
@@ -103,5 +109,14 @@ class _SideDrawerState extends State<SideDrawer> {
         ],
       ),
     );
+  }
+
+  String _translate(BuildContext context, String key) {
+    try {
+      return AppLocalizations.of(context).translate(key);
+    } catch (e) {
+      print('Error translating key "$key": $e');
+      return key;  // Fallback to the key if translation fails
+    }
   }
 }
