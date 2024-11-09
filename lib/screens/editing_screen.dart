@@ -98,7 +98,7 @@ class _EditingScreenState extends State<EditingScreen> {
         children: [
           Container(
             height: frameHeight,
-            width: frameWidth,
+            width: frameWidth - 70,
             decoration: const BoxDecoration(),
             clipBehavior: Clip.hardEdge,
             child: GestureDetector(
@@ -109,9 +109,7 @@ class _EditingScreenState extends State<EditingScreen> {
               onScaleUpdate: (details) {
                 setState(() {
                   const rotationDampingFactor = 0.009;
-                  // Update rotation angle
                   _rotationAngle += details.rotation * rotationDampingFactor;
-                  // Calculate movement offset
                   final Offset offsetDelta = details.focalPoint - _initialFocalPoint;
                   _imageOffset = _startOffset + offsetDelta;
                 });
@@ -137,6 +135,7 @@ class _EditingScreenState extends State<EditingScreen> {
             child: Image.network(
               widget.frame.frameImage,
               width: frameWidth,
+               height: frameHeight,
               fit: BoxFit.fitHeight,
             ),
           ),

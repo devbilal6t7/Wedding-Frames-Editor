@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wedding_frames_editor/screens/home_screen.dart';
 import 'package:wedding_frames_editor/screens/language_screen.dart';
 
@@ -13,19 +13,22 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _isLanguageSelected = false;
+  Widget? _nextScreen;
 
   @override
   void initState() {
     super.initState();
-    _checkLanguageSelection();
+    _determineNextScreen();
   }
 
-  Future<void> _checkLanguageSelection() async {
+  Future<void> _determineNextScreen() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? languageCode = prefs.getString('selectedLanguage');
+    bool isLanguageSelected = prefs.getString('selectedLanguage') != null;
+
     setState(() {
-      _isLanguageSelected = languageCode != null;
+      _nextScreen = isLanguageSelected
+          ? const HomeScreen()
+          : const LanguageSelectionScreen();
     });
   }
 
@@ -39,7 +42,9 @@ class _SplashScreenState extends State<SplashScreen> {
         color: Colors.black,
         width: screenWidth,
         height: screenHeight,
-        child: AnimatedSplashScreen(
+        child: _nextScreen == null
+            ? const Center(child: CircularProgressIndicator())
+            : AnimatedSplashScreen(
           backgroundColor: Colors.black,
           splashIconSize: screenHeight,
           pageTransitionType: PageTransitionType.bottomToTop,
@@ -50,9 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
             height: screenWidth,
             width: screenWidth,
           ),
-          nextScreen: _isLanguageSelected
-              ? const HomeScreen()
-              : const LanguageSelectionScreen(),
+          nextScreen: _nextScreen!,
         ),
       ),
     );
