@@ -1,31 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:wedding_frames_editor/consts/assets.dart';
-import 'package:wedding_frames_editor/providers/frames_provider.dart';
-import 'package:wedding_frames_editor/models/frame_model.dart';
-import 'package:wedding_frames_editor/screens/couple_landscape_mode.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../ads/ad_provider.dart';
+import '../providers/frames_provider.dart';
+import '../models/frame_model.dart';
 import '../consts/app_colors.dart';
+import '../consts/assets.dart';
 import '../widgets/app_localizations.dart';
 import 'couple_editing_screen.dart';
 import 'editing_screen.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'couple_landscape_mode.dart';
 
 class AllFramesScreen extends StatefulWidget {
   final String categoryId;
   final String title;
 
-  const AllFramesScreen(
-      {super.key, required this.categoryId, required this.title});
+  const AllFramesScreen({
+    super.key,
+    required this.categoryId,
+    required this.title,
+  });
 
   @override
   State<AllFramesScreen> createState() => _AllFramesScreenState();
 }
 
 class _AllFramesScreenState extends State<AllFramesScreen> {
-  void _showImagePickerOptions(BuildContext context, FrameModel frame) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Load the banner ad using AdProvider
+    AdProvider.instance.loadBanner(
+      MediaQuery.of(context).size.width.toInt(),
+      100, // Ad height
+    );
+    print('AdProvider Banner loaded in didChangeDependencies');
+  }
+
+  void _showImagePickerOptions(
+      BuildContext context, FrameModel frame, String categoryId) {
     final parentContext = context;
+
+    // Ensure AdProvider loads the banner
+    AdProvider.instance.loadBanner(
+      MediaQuery.of(context).size.width.toInt(),
+      50, // Adjust banner height
+    );
+
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -43,11 +66,18 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: Text( AppLocalizations.of(context).translate('chooseFromGallery'),),
+                title: Text(
+                  AppLocalizations.of(context).translate('chooseFromGallery'),
+                ),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.gallery, frame,
-                      widget.categoryId, frame.type);
+                  await _pickImage(
+                    parentContext,
+                    ImageSource.gallery,
+                    frame,
+                    categoryId,
+                    frame.type,
+                  );
                 },
               ),
               ListTile(
@@ -56,13 +86,23 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title: Text( AppLocalizations.of(context).translate('takeWithCamera'),),
+                title: Text(
+                  AppLocalizations.of(context).translate('takeWithCamera'),
+                ),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _pickImage(parentContext, ImageSource.camera, frame,
-                      widget.categoryId, frame.type);
+                  await _pickImage(
+                    parentContext,
+                    ImageSource.camera,
+                    frame,
+                    categoryId,
+                    frame.type,
+                  );
                 },
               ),
+              AdProvider.instance.isLoading
+                  ? AdProvider.instance.getBannerAdWidget()
+                  : const SizedBox(height: 0,),
             ],
           ),
         );
@@ -70,54 +110,57 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, ImageSource source,
-      FrameModel frame, String categoryId, String type) async {
+  Future<void> _pickImage(
+      BuildContext context,
+      ImageSource source,
+      FrameModel frame,
+      String categoryId,
+      String type,
+      ) async {
     final picker = ImagePicker();
 
+    if (categoryId == '1') {
+      final List<XFile> images = await picker.pickMultiImage(limit: 2);
 
-      if (categoryId == '1') {
-        final List<XFile> images = await picker.pickMultiImage(limit: 2);
-
-        if (images.length == 2 && frame.type.contains("p")) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CoupleEditingScreen(
-                frame: frame,
-                imagePath1: images[0].path,
-                imagePath2: images[1].path,
-                categoryId: categoryId,
-                type: type,
-              ),
+      if (images.length == 2 && frame.type.contains("p")) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CoupleEditingScreen(
+              frame: frame,
+              imagePath1: images[0].path,
+              imagePath2: images[1].path,
+              categoryId: categoryId,
+              type: type,
             ),
-          );
-        } else if (images.length == 2 && frame.type.contains("l")){
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CoupleLandscape(
-                frame: frame,
-                imagePath1: images[0].path,
-                imagePath2: images[1].path,
-                categoryId: categoryId,
-                type: type,
-              ),
+          ),
+        );
+      } else if (images.length == 2 && frame.type.contains("l")) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CoupleLandscape(
+              frame: frame,
+              imagePath1: images[0].path,
+              imagePath2: images[1].path,
+              categoryId: categoryId,
+              type: type,
             ),
-          );
-        } else if (images.length != 2) {
-          ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(
-              content: Text( AppLocalizations.of(context).translate('snackBar2Images'),),
-              backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).translate('snackBar2Images'),
             ),
-          );
-        }
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-      else {
+    } else {
       final XFile? pickedFile = await picker.pickImage(source: source);
-
-      if (pickedFile != null &&
-          Navigator.of(context, rootNavigator: true).mounted) {
+      if (pickedFile != null) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -136,35 +179,27 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
     if (widget.categoryId == "1") {
       return Text(
         AppLocalizations.of(context).translate('coupleFrames'),
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       );
     } else if (widget.categoryId == "2") {
       return Text(
         AppLocalizations.of(context).translate('weddingSolo'),
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
       );
     } else {
       return Text(
         AppLocalizations.of(context).translate('anniversaryFrames'),
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title:  _getAppBarTitle(),
+        title: _getAppBarTitle(),
         backgroundColor: WeddingColors.mainColor,
       ),
       body: FutureBuilder(
@@ -173,13 +208,27 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-                child:
-                    CircularProgressIndicator(color: WeddingColors.mainColor));
+              child: CircularProgressIndicator(
+                color: WeddingColors.mainColor,
+              ),
+            );
           } else if (snapshot.hasError) {
-            return Center(child: Text( AppLocalizations.of(context).translate('errorLoading'),));
+            return Center(
+              child: Text(
+                AppLocalizations.of(context).translate('errorLoading'),
+              ),
+            );
           } else {
             final frames = Provider.of<FramesProvider>(context)
                 .getFrames(widget.categoryId);
+            print('Frames fetched: ${frames.length}');
+            if (frames.isEmpty) {
+              return Center(
+                child: Text(
+                  AppLocalizations.of(context).translate('noFramesAvailable'),
+                ),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
@@ -192,8 +241,7 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
                 itemCount: frames.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                    onTap: () =>
-                        _showImagePickerOptions(context, frames[index]),
+                    onTap: () => _showImagePickerOptions(context, frames[index], widget.categoryId),
                     child: _buildFrameItem(frames[index]),
                   );
                 },
@@ -201,6 +249,13 @@ class _AllFramesScreenState extends State<AllFramesScreen> {
             );
           }
         },
+      ),
+      bottomNavigationBar: AdProvider.instance.isLoading
+          ? AdProvider.instance.getBannerAdWidget()
+          : Container(
+        height: 50,
+        alignment: Alignment.center,
+        child: Text('Ad failed to load or is unavailable'),
       ),
     );
   }

@@ -6,8 +6,23 @@ import 'package:wedding_frames_editor/providers/frame_category_provider.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
 import 'package:wedding_frames_editor/screens/splash_screen.dart';
 import 'package:wedding_frames_editor/widgets/app_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(testDeviceIds: ["DBD68B98D3BBF0EADB4DD7A5B4C2195A"]),
+  );
+
+  // MobileAds.instance.initialize();
+  // WidgetsFlutterBinding.ensureInitialized();
+  // MobileAds.instance.initialize();
+  // MobileAds.instance.updateRequestConfiguration(
+  //   RequestConfiguration(
+  //     testDeviceIds: ['DBD68B98D3BBF0EADB4DD7A5B4C2195A'],
+  //   ),
+  // );
   runApp(const MyApp());
 }
 

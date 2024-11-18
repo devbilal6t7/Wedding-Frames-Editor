@@ -3,11 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../ads/ad_units.dart';
 import '../consts/app_colors.dart';
 import '../consts/assets.dart';
 import '../models/frame_model.dart';
@@ -49,9 +51,9 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
 
   late double _rotationAngle2 = 0.0;
   Offset _imageOffset2 = Offset.zero;
-
+  int _editFrameClickCounter = 0;
   final ImagePicker _picker = ImagePicker();
-
+  InterstitialAd? _interstitialAd;
   bool _isFrameLoaded = false;
 
   @override
@@ -59,12 +61,45 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
     super.initState();
     _selectedImagePath1 = widget.imagePath1;
     _selectedImagePath2 = widget.imagePath2;
+    _loadInterstitialAd();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadFrame();
+  }
+  Future<void> _loadInterstitialAd() async {
+    await InterstitialAd.load(
+      adUnitId: AdUnitIds.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+  void _showInterstitialAd(VoidCallback onAdDismissed) {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd(); // Reload for the next use
+          onAdDismissed();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          onAdDismissed();
+        },
+      );
+      _interstitialAd!.show();
+    } else {
+      onAdDismissed();
+    }
   }
 
   Future<void> _loadFrame() async {
@@ -270,7 +305,15 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
               }),
           _buildIconButton(WeddingAssets.editFrame,
               AppLocalizations.of(context).translate('editFrame'), () {
-                _openFramesBottomSheet(widget.categoryId);
+                _editFrameClickCounter++;
+                if (_editFrameClickCounter == 3) {
+                  _showInterstitialAd(() {
+                    _editFrameClickCounter = 0;
+                    _openFramesBottomSheet(widget.categoryId);
+                  });
+                } else {
+                  _openFramesBottomSheet(widget.categoryId);
+                }
               }),
           _buildIconButton(WeddingAssets.export,
               AppLocalizations.of(context).translate('export'), () {
@@ -423,6 +466,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
   }
 
   void _showExportDialog() {
+    _showInterstitialAd(() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -463,6 +507,7 @@ class _CoupleEditingScreenState extends State<CoupleEditingScreen> {
         );
       },
     );
+    });
   }
 
   Widget _buildDialogButton(String text, String icon, VoidCallback onPressed) {

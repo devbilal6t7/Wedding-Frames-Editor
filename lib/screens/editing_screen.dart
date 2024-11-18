@@ -3,11 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wedding_frames_editor/ads/ad_units.dart';
 import 'package:wedding_frames_editor/models/frame_model.dart';
 import 'package:path_provider/path_provider.dart';
 import '../consts/app_colors.dart';
@@ -35,18 +37,19 @@ class EditingScreen extends StatefulWidget {
 class _EditingScreenState extends State<EditingScreen> {
   final GlobalKey _captureKey = GlobalKey();
   String? _selectedImagePath;
-
+  int _editFrameClickCounter = 0;
   late double _rotationAngle = 0.0;
   Offset _imageOffset = Offset.zero;
   Offset _initialFocalPoint = Offset.zero;
   Offset _startOffset = Offset.zero;
-
+  InterstitialAd? _interstitialAd;
   bool _isFrameLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _selectedImagePath = widget.imagePath;
+    _loadInterstitialAd();
   }
   @override
   void didChangeDependencies() {
@@ -59,6 +62,39 @@ class _EditingScreenState extends State<EditingScreen> {
     setState(() {
       _isFrameLoaded = true;
     });
+  }
+  Future<void> _loadInterstitialAd() async {
+    await InterstitialAd.load(
+      adUnitId: AdUnitIds.interstitialAdUnitId, // Replace with your AdMob Interstitial Ad Unit ID
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd(VoidCallback onAdDismissed) {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd(); // Load the next interstitial ad
+          onAdDismissed();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          onAdDismissed();
+        },
+      );
+      _interstitialAd!.show();
+    } else {
+      onAdDismissed();
+    }
   }
 
   @override
@@ -170,7 +206,15 @@ class _EditingScreenState extends State<EditingScreen> {
               }),
           _buildIconButton(WeddingAssets.editFrame,
               AppLocalizations.of(context).translate('editFrame'), () {
-                _openFramesBottomSheet(widget.categoryId);
+                _editFrameClickCounter++;
+                if (_editFrameClickCounter == 3) {
+                  _showInterstitialAd(() {
+                    _editFrameClickCounter = 0;
+                    _openFramesBottomSheet(widget.categoryId);
+                  });
+                } else {
+                  _openFramesBottomSheet(widget.categoryId);
+                }
               }),
           _buildIconButton(WeddingAssets.export,
               AppLocalizations.of(context).translate('export'), () {
@@ -305,46 +349,48 @@ class _EditingScreenState extends State<EditingScreen> {
   }
 
   void _showExportDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: WeddingColors.mainColor, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(WeddingAssets.export, height: 30, width: 30),
-              const SizedBox(height: 10),
-              Text(AppLocalizations.of(context).translate('selectOption'),
-                  style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 20),
-              _buildDialogButton(
-                AppLocalizations.of(context).translate('downloadSaved'),
-                WeddingAssets.download,
-                    () {
-                  _saveImage();
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 10),
-              _buildDialogButton(
-                AppLocalizations.of(context).translate('shareWithFriends'),
-                WeddingAssets.share,
-                    () {
-                  _shareImage();
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    _showInterstitialAd(() {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: WeddingColors.mainColor, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 20),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(WeddingAssets.export, height: 30, width: 30),
+                const SizedBox(height: 10),
+                Text(AppLocalizations.of(context).translate('selectOption'),
+                    style: TextStyle(fontSize: 18)),
+                const SizedBox(height: 20),
+                _buildDialogButton(
+                  AppLocalizations.of(context).translate('downloadSaved'),
+                  WeddingAssets.download,
+                      () {
+                    _saveImage();
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(height: 10),
+                _buildDialogButton(
+                  AppLocalizations.of(context).translate('shareWithFriends'),
+                  WeddingAssets.share,
+                      () {
+                    _shareImage();
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildDialogButton(String text, String icon, VoidCallback onPressed) {

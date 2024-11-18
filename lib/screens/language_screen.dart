@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:wedding_frames_editor/ads/ad_units.dart';
 import 'package:wedding_frames_editor/screens/home_screen.dart';
 
 import '../../../consts/app_colors.dart';
@@ -13,23 +15,26 @@ class LanguageSelectionScreen extends StatefulWidget {
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
-  String? _selectedLanguage;
+  String _selectedLanguage = 'en'; // Default to English (US)
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
+  InterstitialAd? _interstitialAd;
 
   @override
   void initState() {
     super.initState();
     _loadSelectedLanguage(context);
+    _loadBannerAd();
+    _loadInterstitialAd();
   }
 
   Future<void> _loadSelectedLanguage(context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? languageCode = prefs.getString('selectedLanguage');
-    if (languageCode != null) {
-      setState(() {
-        _selectedLanguage = languageCode;
-      });
-      MyApp.setLocale(context, Locale(languageCode));
-    }
+    setState(() {
+      _selectedLanguage = languageCode ?? 'en'; // Default to English (US)
+    });
+    MyApp.setLocale(context, Locale(_selectedLanguage));
   }
 
   Future<void> _saveSelectedLanguage(String languageCode) async {
@@ -40,18 +45,76 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     });
   }
 
-  void _navigateToHomeScreen() {
-    if (_selectedLanguage != null) {
-      MyApp.setLocale(context, Locale(_selectedLanguage!));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
+  Future<void> _loadBannerAd() async {
+    _bannerAd = BannerAd(
+      adUnitId: AdUnitIds.bannerAdUnitId, // Replace with your AdMob Banner Ad Unit ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          setState(() {
+            _isBannerAdLoaded = false;
+          });
+        },
+      ),
+    )..load();
+  }
+
+  Future<void> _loadInterstitialAd() async {
+    await InterstitialAd.load(
+      adUnitId: AdUnitIds.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd(VoidCallback onAdDismissed) {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd(); // Load the next interstitial ad
+          onAdDismissed();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          onAdDismissed();
+        },
       );
+      _interstitialAd!.show();
+    } else {
+      onAdDismissed();
+    }
+  }
+
+  void _navigateToHomeScreen() {
+    if (_selectedLanguage.isNotEmpty) {
+      _showInterstitialAd(() {
+        MyApp.setLocale(context, Locale(_selectedLanguage));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a language'),
+        const SnackBar(
+          content: Text('Please select a language'),
         ),
       );
     }
@@ -69,12 +132,13 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               const Text(
                 'Selected Language',
                 style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 10),
-              _selectedLanguage != null
-                  ? _buildSelectedLanguageTile(_selectedLanguage!)
+              _selectedLanguage.isNotEmpty
+                  ? _buildSelectedLanguageTile(_selectedLanguage)
                   : Container(
                 decoration: BoxDecoration(
                   color: WeddingColors.mainColor,
@@ -85,10 +149,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   title: Text(
                     'Please Select Language',
                     style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600,color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
-                  // trailing: Icon(Icons.check_circle, color: AppColors().white),
                   leading: CircleAvatar(
                     backgroundColor: Colors.white,
                     child: Icon(
@@ -103,7 +168,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               const Text(
                 'All Languages',
                 style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               Expanded(
@@ -119,6 +185,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   ],
                 ),
               ),
+              if (_isBannerAdLoaded)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 20),
+                  alignment: Alignment.center,
+                  child: AdWidget(ad: _bannerAd!),
+                  height: _bannerAd!.size.height.toDouble(),
+                  width: _bannerAd!.size.width.toDouble(),
+                ),
               Center(
                 child: SizedBox(
                   width: double.infinity,
@@ -126,8 +200,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                     onPressed: _navigateToHomeScreen,
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      backgroundColor:WeddingColors.mainColor,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 70),
+                      backgroundColor: WeddingColors.mainColor,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 70),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -135,7 +210,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                     child: const Text(
                       'Continue',
                       style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -157,17 +233,20 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         border: Border.all(color: WeddingColors.mainColor),
       ),
       child: ListTile(
-
         title: Text(
           languageName,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: Colors.white),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
         trailing: const Icon(Icons.check_circle, color: Colors.white),
         leading: const CircleAvatar(
           backgroundColor: Colors.white,
           child: Icon(
             Icons.flag,
-           size: 24,
+            size: 24,
             color: Colors.black,
           ),
         ),
@@ -182,7 +261,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ?WeddingColors.mainColor : Colors.grey.shade300,
+          color: isSelected ? WeddingColors.mainColor : Colors.grey.shade300,
         ),
       ),
       child: ListTile(
@@ -195,8 +274,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               ? WeddingColors.mainColor
               : WeddingColors.mainColor.withOpacity(0.7),
           child: const Icon(
-           Icons.flag,
-           size: 24,
+            Icons.flag,
+            size: 24,
             color: Colors.white,
           ),
         ),
@@ -231,5 +310,4 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         return 'English';
     }
   }
-
 }

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:wedding_frames_editor/ads/ad_units.dart';
 import 'package:wedding_frames_editor/consts/app_colors.dart';
 import 'package:wedding_frames_editor/consts/assets.dart';
 import 'package:wedding_frames_editor/screens/side_drawer.dart';
 import 'package:wedding_frames_editor/providers/frames_provider.dart';
+import '../ads/ad_provider.dart';
 import '../models/frame_model.dart';
 import '../providers/frame_category_provider.dart';
 import '../widgets/app_localizations.dart';
@@ -14,6 +16,7 @@ import 'all_frames_screen.dart';
 import 'couple_editing_screen.dart';
 import 'couple_landscape_mode.dart';
 import 'editing_screen.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,12 +25,55 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+
+
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
+  InterstitialAd? _interstitialAd;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInterstitialAd();
+  }
 
   Future<void> _refreshCategories() async {
     await Provider.of<CategoryProvider>(context, listen: false)
         .fetchCategories();
+  }
+
+  Future<void> _loadInterstitialAd() async {
+    await InterstitialAd.load(
+      adUnitId: AdUnitIds.interstitialAdUnitId, // Replace with your AdMob Interstitial Ad Unit ID
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd(VoidCallback onAdDismissed) {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd(); // Load the next interstitial ad
+          onAdDismissed();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          onAdDismissed();
+        },
+      );
+      _interstitialAd!.show();
+    } else {
+      onAdDismissed();
+    }
   }
 
   @override
@@ -37,9 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title:  Text(
-          AppLocalizations.of(context)
-              .translate('appBarHome'),
+        title: Text(
+          AppLocalizations.of(context).translate('appBarHome'),
           style: const TextStyle(fontSize: 18),
         ),
         backgroundColor: WeddingColors.mainColor,
@@ -66,10 +111,12 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return _buildShimmerLoading();
             } else if (snapshot.hasError) {
-              return  RefreshIndicator(
+              return RefreshIndicator(
                 onRefresh: _refreshCategories,
-                child:  Center(
-                  child: Text( AppLocalizations.of(context).translate('checkInternet'),),
+                child: Center(
+                  child: Text(
+                    AppLocalizations.of(context).translate('checkInternet'),
+                  ),
                 ),
               );
             } else {
@@ -80,12 +127,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: categories
                       .map((category) => Column(
-                            children: [
-                              _buildCategoryCard(
-                                  category.categoryName, category.categoryId),
-                              const SizedBox(height: 16),
-                            ],
-                          ))
+                    children: [
+                      _buildCategoryCard(
+                          category.categoryName, category.categoryId),
+                      const SizedBox(height: 16),
+                    ],
+                  ))
                       .toList(),
                 ),
               );
@@ -95,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   Widget _buildShimmerLoading() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -103,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: List.generate(
             3,
-            (index) => Column(
+                (index) => Column(
               children: [
                 Shimmer.fromColors(
                   baseColor: Colors.grey.shade300,
@@ -111,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     width: double.infinity,
                     height:
-                        230.0, // Set height to match _buildCategoryCard height
+                    230.0, // Set height to match _buildCategoryCard height
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16.0),
@@ -148,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               )
-            else if(categoryId == "2")
+            else if (categoryId == "2")
               Text(
                 AppLocalizations.of(context).translate('weddingSolo'),
                 style: const TextStyle(
@@ -172,7 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return _buildFramesShimmer();
                 } else if (snapshot.hasError) {
-                  return  Text( AppLocalizations.of(context).translate('errorLoading'),);
+                  return Text(AppLocalizations.of(context)
+                      .translate('errorLoading'));
                 } else {
                   final frames = Provider.of<FramesProvider>(context)
                       .getFrames(categoryId);
@@ -185,15 +232,17 @@ class _HomeScreenState extends State<HomeScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AllFramesScreen(
-                        categoryId: categoryId,
-                        title: title,
+                  _showInterstitialAd(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AllFramesScreen(
+                          categoryId: categoryId,
+                          title: title,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  });
                 },
                 child: Text(
                   AppLocalizations.of(context).translate('viewAll'),
@@ -210,14 +259,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
+  Widget _buildFramesRow(List<FrameModel> frames, String categoryId) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: frames.map((frame) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: InkWell(
+              onTap: () {
+                _showInterstitialAd(() {
+                  _showImagePickerOptions(context, frame, categoryId);
+                });
+              },
+              child: _buildFrameThumbnail(
+                frame.frameImage,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
   Widget _buildFramesShimmer() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: List.generate(
           3,
-          (index) => Padding(
+              (index) => Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Shimmer.fromColors(
               baseColor: Colors.grey.shade300,
@@ -237,30 +307,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFramesRow(List<FrameModel> frames, String categoryId) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: frames.map((frame) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: InkWell(
-              onTap: () {
-                _showImagePickerOptions(context, frame, categoryId);
-              },
-              child: _buildFrameThumbnail(
-                frame.frameImage,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   void _showImagePickerOptions(
       BuildContext context, FrameModel frame, String categoryId) {
     final parentContext = context;
+
+    // Ensure AdProvider loads the banner
+    AdProvider.instance.loadBanner(
+      MediaQuery.of(context).size.width.toInt(),
+      50, // Adjust banner height
+    );
+
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -278,11 +334,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title:  Text( AppLocalizations.of(context).translate('chooseFromGallery'),),
+                title: Text(
+                  AppLocalizations.of(context).translate('chooseFromGallery'),
+                ),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
-                      parentContext, ImageSource.gallery, frame, categoryId, frame.type);
+                    parentContext,
+                    ImageSource.gallery,
+                    frame,
+                    categoryId,
+                    frame.type,
+                  );
                 },
               ),
               ListTile(
@@ -291,13 +354,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 25,
                   width: 25,
                 ),
-                title:  Text( AppLocalizations.of(context).translate('takeWithCamera'),),
+                title: Text(
+                  AppLocalizations.of(context).translate('takeWithCamera'),
+                ),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImage(
-                      parentContext, ImageSource.camera, frame, categoryId,frame.type);
+                    parentContext,
+                    ImageSource.camera,
+                    frame,
+                    categoryId,
+                    frame.type,
+                  );
                 },
               ),
+              AdProvider.instance.isLoading
+                  ? AdProvider.instance.getBannerAdWidget()
+                  : const SizedBox(height: 0,),
             ],
           ),
         );
@@ -341,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       } else if (images.length != 2) {
         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
+          SnackBar(
             content: Text( AppLocalizations.of(context).translate('snackBar2Images'),),
             backgroundColor: Colors.red,
           ),
@@ -391,4 +464,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
 }
+
